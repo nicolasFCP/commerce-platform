@@ -40,3 +40,12 @@ Fecha: 31 de agosto de 2026
 - Se configuró Cascade en las relaciones.
 - Se creó `Coca-Cola 1.5L` por $6.500 como producto de prueba.
 - Se verificó la estructura comercio → categoría → producto.
+
+## Versión 0.0.5
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `customers`.
+- Se conectó `customers` con `stores`.
+- Se creó `Cliente Demo` como cliente de prueba.
+- Se verificó la relación comercio → cliente.

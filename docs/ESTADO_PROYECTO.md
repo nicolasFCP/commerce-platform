@@ -28,6 +28,11 @@ PASO 2 — Base de datos con Supabase.
 - Se creó el producto de prueba `Coca-Cola 1.5L`.
 - Se verificó correctamente la relación comercio → categoría → producto.
 
+- Se creó la tabla `customers`.
+- Se relacionó `customers.store_id` con `stores.id`.
+- Se creó el cliente de prueba `Cliente Demo`.
+- Se verificó correctamente la relación comercio → cliente.
+
 ---
 
 ## Tabla `stores`
@@ -107,6 +112,31 @@ Guarda los productos de cada comercio.
 
 ---
 
+## Tabla `customers`
+
+Guarda los clientes que realizan pedidos en cada comercio.
+
+### Columnas
+
+- `id`: uuid, clave primaria, generado automáticamente.
+- `created_at`: fecha de creación automática.
+- `store_id`: identifica a qué comercio pertenece el cliente.
+- `name`: nombre del cliente.
+- `phone`: teléfono del cliente.
+- `email`: correo electrónico opcional.
+- `active`: indica si el cliente está activo.
+
+### Relaciones
+
+- `customers.store_id → stores.id`
+
+### Ejemplo actual
+
+- Comercio: `Mercado Demo`
+- Cliente: `Cliente Demo`
+- Teléfono: `3001234567`
+
+-------
 ## Estructura actual de datos
 
 ```text
@@ -116,3 +146,12 @@ Mercado Demo
     │
     └── Coca-Cola 1.5L
         └── $6.500
+
+
+## Próximo objetivo
+
+Crear la estructura de pedidos:
+
+- `orders`
+- `order_items`
+- `order_events`
