@@ -29,3 +29,14 @@ Fecha: 31 de agosto de 2026
 - Se configuró Cascade para actualización y eliminación.
 - Se creó la categoría de prueba `Bebidas` para `Mercado Demo`.
 - Se verificó que la relación entre comercio y categoría funciona correctamente.
+
+## Versión 0.0.4
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `products`.
+- Se conectó `products` con `stores`.
+- Se conectó `products` con `categories`.
+- Se configuró Cascade en las relaciones.
+- Se creó `Coca-Cola 1.5L` por $6.500 como producto de prueba.
+- Se verificó la estructura comercio → categoría → producto.
