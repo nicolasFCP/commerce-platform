@@ -19,3 +19,13 @@ Fecha: 31 de agosto de 2026
 - Se creó la tabla `stores`.
 - Se creó el primer registro de prueba `Mercado Demo`.
 - Se verificó la generación automática de UUID y created_at.
+
+## Versión 0.0.3
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `categories`.
+- Se conectó `categories` con `stores` mediante Foreign Key.
+- Se configuró Cascade para actualización y eliminación.
+- Se creó la categoría de prueba `Bebidas` para `Mercado Demo`.
+- Se verificó que la relación entre comercio y categoría funciona correctamente.

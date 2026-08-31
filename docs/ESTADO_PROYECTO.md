@@ -10,12 +10,10 @@ PASO 2 — Base de datos con Supabase.
 
 ### Completado
 
-- Proyecto Supabase creado.
-- Base de datos PostgreSQL activa.
-- RLS habilitado.
-- Se creó la tabla `stores`.
-- Se insertó correctamente el primer comercio de prueba: Mercado Demo.
-- Se verificó la generación automática de UUID y fecha de creación.
+- Se creó la tabla `categories`.
+- Se relacionó `categories.store_id` con `stores.id` mediante Foreign Key.
+- Se configuró eliminación y actualización en cascada.
+- Se creó la categoría de prueba `Bebidas` vinculada correctamente a `Mercado Demo`.
 
 ### Tabla stores
 
@@ -29,6 +27,21 @@ Columnas:
 - logo_url: dirección del logo, opcional.
 - primary_color: color principal del comercio.
 - active: indica si el comercio está activo.
+
+### Tabla categories
+
+Columnas:
+
+- id: uuid, clave primaria, generado automáticamente.
+- created_at: fecha de creación automática.
+- store_id: identifica a qué comercio pertenece la categoría.
+- name: nombre de la categoría.
+- slug: identificador de la categoría.
+- active: indica si la categoría está activa.
+
+Relación:
+
+- categories.store_id → stores.id
 
 ### Próximo objetivo
 
