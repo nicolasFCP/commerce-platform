@@ -60,3 +60,14 @@ Fecha: 31 de agosto de 2026
 - Se configuró conservación del historial si se elimina un cliente.
 - Se creó el primer pedido de prueba.
 - Se verificaron subtotal, domicilio y total.
+
+## Versión 0.0.7
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `order_items`.
+- Se conectó `order_items` con `orders`.
+- Se conectó `order_items` con `products`.
+- Se configuró conservación del historial si se elimina un producto.
+- Se vinculó `Coca-Cola 1.5L` al primer pedido.
+- Se verificaron cantidad, precio unitario y total de línea.

@@ -38,7 +38,12 @@ PASO 2 — Base de datos con Supabase.
 - Se configuró `Set NULL` al eliminar un cliente para conservar el historial de pedidos.
 - Se creó correctamente el primer pedido de prueba.
 - Se verificó el cálculo de subtotal, domicilio y total.
-
+- Se creó la tabla `order_items`.
+- Se relacionó `order_items.order_id` con `orders.id`.
+- Se relacionó `order_items.product_id` con `products.id`.
+- Se configuró conservación del historial del producto mediante `Set NULL`.
+- Se vinculó correctamente `Coca-Cola 1.5L` al primer pedido de prueba.
+- Se verificó cantidad, precio unitario y total de línea.
 ---
 
 ## Tabla `stores`
@@ -179,6 +184,33 @@ Guarda la información principal de cada pedido.
 - Domicilio: `$3.000`
 - Total: `$9.500`
 -------
+## Tabla `order_items`
+
+Guarda los productos contenidos dentro de cada pedido.
+
+### Columnas
+
+- `id`: uuid, clave primaria, generado automáticamente.
+- `created_at`: fecha de creación automática.
+- `order_id`: identifica a qué pedido pertenece el producto.
+- `product_id`: referencia opcional al producto actual del catálogo.
+- `product_name`: nombre del producto en el momento de la compra.
+- `quantity`: cantidad comprada.
+- `unit_price`: precio unitario en el momento de la compra.
+- `line_total`: valor total de esa línea del pedido.
+
+### Relaciones
+
+- `order_items.order_id → orders.id`
+- `order_items.product_id → products.id`
+
+### Ejemplo actual
+
+- Producto: `Coca-Cola 1.5L`
+- Cantidad: `1`
+- Precio unitario: `$6.500`
+- Total línea: `$6.500`
+------------------------------
 
 ## Estructura actual de datos
 
