@@ -49,3 +49,14 @@ Fecha: 31 de agosto de 2026
 - Se conectó `customers` con `stores`.
 - Se creó `Cliente Demo` como cliente de prueba.
 - Se verificó la relación comercio → cliente.
+
+## Versión 0.0.6
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `orders`.
+- Se conectó `orders` con `stores`.
+- Se conectó `orders` con `customers`.
+- Se configuró conservación del historial si se elimina un cliente.
+- Se creó el primer pedido de prueba.
+- Se verificaron subtotal, domicilio y total.

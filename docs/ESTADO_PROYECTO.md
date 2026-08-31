@@ -32,6 +32,12 @@ PASO 2 — Base de datos con Supabase.
 - Se relacionó `customers.store_id` con `stores.id`.
 - Se creó el cliente de prueba `Cliente Demo`.
 - Se verificó correctamente la relación comercio → cliente.
+- Se creó la tabla `orders`.
+- Se relacionó `orders.store_id` con `stores.id`.
+- Se relacionó `orders.customer_id` con `customers.id`.
+- Se configuró `Set NULL` al eliminar un cliente para conservar el historial de pedidos.
+- Se creó correctamente el primer pedido de prueba.
+- Se verificó el cálculo de subtotal, domicilio y total.
 
 ---
 
@@ -137,6 +143,43 @@ Guarda los clientes que realizan pedidos en cada comercio.
 - Teléfono: `3001234567`
 
 -------
+## Tabla `orders`
+
+Guarda la información principal de cada pedido.
+
+### Columnas
+
+- `id`: uuid, clave primaria, generado automáticamente.
+- `created_at`: fecha de creación automática.
+- `store_id`: identifica el comercio que recibe el pedido.
+- `customer_id`: referencia opcional al cliente registrado.
+- `customer_name`: nombre del cliente en el momento de la compra.
+- `customer_phone`: teléfono del cliente en el momento de la compra.
+- `customer_email`: correo opcional del cliente.
+- `fulfillment_type`: forma de entrega (`delivery` o `pickup`).
+- `delivery_address`: dirección de entrega, opcional.
+- `notes`: observaciones del pedido.
+- `status`: estado actual del pedido.
+- `subtotal`: valor de productos.
+- `delivery_fee`: costo del domicilio.
+- `total`: valor total del pedido.
+
+### Relaciones
+
+- `orders.store_id → stores.id`
+- `orders.customer_id → customers.id`
+
+### Ejemplo actual
+
+- Comercio: `Mercado Demo`
+- Cliente: `Cliente Demo`
+- Tipo: `delivery`
+- Estado: `pending`
+- Subtotal: `$6.500`
+- Domicilio: `$3.000`
+- Total: `$9.500`
+-------
+
 ## Estructura actual de datos
 
 ```text
