@@ -6,7 +6,33 @@ Proyecto iniciado.
 
 ## Paso actual
 
-PASO 1 — Preparación del proyecto.
+PASO 2 — Base de datos con Supabase.
+
+### Completado
+
+- Proyecto Supabase creado.
+- Base de datos PostgreSQL activa.
+- RLS habilitado.
+- Se creó la tabla `stores`.
+- Se insertó correctamente el primer comercio de prueba: Mercado Demo.
+- Se verificó la generación automática de UUID y fecha de creación.
+
+### Tabla stores
+
+Columnas:
+
+- id: uuid, clave primaria, generado automáticamente.
+- created_at: fecha de creación automática.
+- name: nombre del comercio.
+- slug: identificador único del comercio para URL.
+- phone: teléfono del comercio.
+- logo_url: dirección del logo, opcional.
+- primary_color: color principal del comercio.
+- active: indica si el comercio está activo.
+
+### Próximo objetivo
+
+Crear las demás tablas fundamentales y sus relaciones.
 
 ## Tecnología
 
