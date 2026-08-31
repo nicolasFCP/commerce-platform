@@ -71,3 +71,13 @@ Fecha: 31 de agosto de 2026
 - Se configuró conservación del historial si se elimina un producto.
 - Se vinculó `Coca-Cola 1.5L` al primer pedido.
 - Se verificaron cantidad, precio unitario y total de línea.
+
+## Versión 0.0.8
+
+Fecha: 31 de agosto de 2026
+
+- Se creó la tabla `order_events`.
+- Se conectó `order_events` con `orders`.
+- Se creó el primer evento del pedido de prueba.
+- Se registró el evento `created → pending`.
+- Se verificó el historial básico de pedidos.

@@ -44,6 +44,11 @@ PASO 2 — Base de datos con Supabase.
 - Se configuró conservación del historial del producto mediante `Set NULL`.
 - Se vinculó correctamente `Coca-Cola 1.5L` al primer pedido de prueba.
 - Se verificó cantidad, precio unitario y total de línea.
+- Se creó la tabla `order_events`.
+- Se relacionó `order_events.order_id` con `orders.id`.
+- Se creó el primer evento del pedido de prueba.
+- Se registró correctamente el evento `created` con estado inicial `pending`.
+- Se verificó que el historial del pedido funciona de forma independiente al estado actual.
 ---
 
 ## Tabla `stores`
@@ -211,6 +216,33 @@ Guarda los productos contenidos dentro de cada pedido.
 - Precio unitario: `$6.500`
 - Total línea: `$6.500`
 ------------------------------
+## Tabla `order_events`
+
+Guarda el historial de eventos y cambios de estado de cada pedido.
+
+### Columnas
+
+- `id`: uuid, clave primaria, generado automáticamente.
+- `created_at`: fecha y hora automática del evento.
+- `order_id`: identifica el pedido al que pertenece el evento.
+- `event_type`: tipo de evento ocurrido.
+- `from_status`: estado anterior, opcional.
+- `to_status`: nuevo estado, opcional.
+- `actor_type`: identifica quién realizó la acción.
+- `actor_user_id`: identificador opcional del usuario que realizó la acción.
+- `reason`: motivo opcional del evento.
+
+### Relaciones
+
+- `order_events.order_id → orders.id`
+
+### Ejemplo actual
+
+- Evento: `created`
+- Estado anterior: `NULL`
+- Estado nuevo: `pending`
+- Actor: `system`
+-------------
 
 ## Estructura actual de datos
 
