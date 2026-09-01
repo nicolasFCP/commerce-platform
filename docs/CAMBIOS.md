@@ -137,3 +137,15 @@ Fecha: 1 de septiembre de 2026
 - Se realizó el primer pedido real desde el navegador.
 - Se verificó la creación correcta en `orders`, `order_items` y `order_events`.
 - Los precios y totales continúan siendo calculados y validados por la base de datos.
+
+## Versión 0.0.13
+
+Fecha: 1 de septiembre de 2026
+
+- Se creó el primer acceso administrativo desde el frontend.
+- Se conectó el login con Supabase Auth.
+- Se verificó el inicio de sesión del owner de Mercado Demo.
+- Se conectó el panel administrativo con la tabla `orders`.
+- Los pedidos son consultados mediante la sesión autenticada y RLS.
+- Se verificó que Mercado Demo puede visualizar sus pedidos recibidos.
+- El panel muestra cliente, teléfono, dirección, notas, estado y total.

@@ -251,3 +251,14 @@ commerce-platform/
 ├── css/
 ├── docs/
 └── sql/
+
+## 21. Panel administrativo inicial
+
+- Se creó `admin.html`.
+- Se creó `js/admin.js`.
+- Se conectó el login con Supabase Auth.
+- Se verificó el acceso del usuario `owner` de Mercado Demo.
+- Se creó una primera vista de pedidos recibidos.
+- Los pedidos son obtenidos directamente desde Supabase.
+- El acceso está limitado mediante Row Level Security.
+- Se muestran nombre del cliente, teléfono, dirección, notas, estado y total.

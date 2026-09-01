@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Commerce Platform - Administración</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #111827;
+        }
+
+        main {
+            width: min(100% - 32px, 500px);
+            margin: 0 auto;
+            padding: 60px 0;
+        }
+
+        .panel {
+            background: white;
+            padding: 28px;
+            border-radius: 18px;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        form {
+            display: grid;
+            gap: 18px;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font: inherit;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #mensaje {
+            margin-top: 18px;
+        }
+        .pedido {
+    margin-top: 16px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.pedido h3 {
+    margin: 0 0 10px;
+}
+
+.pedido p {
+    margin: 6px 0;
+}
+
+.pedido-total {
+    margin-top: 12px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.estado-pedido {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    font-size: 14px;
+}
+    </style>
+</head>
+
+<body>
+
+    <main>
+
+        <section class="panel">
+
+            <h1>Administración</h1>
+
+            <p>
+                Ingresa para administrar tu comercio.
+            </p>
+
+            <form id="login-form">
+
+                <label>
+                    Correo
+                    <input
+                        id="email"
+                        type="email"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Contraseña
+                    <input
+                        id="password"
+                        type="password"
+                        required
+                    >
+                </label>
+
+                <button
+                    id="login-button"
+                    type="submit"
+                >
+                    Iniciar sesión
+                </button>
+
+            </form>
+
+            <p id="mensaje"></p>
+
+        </section>
+        <section
+    id="pedidos-panel"
+    class="panel"
+    style="display: none; margin-top: 24px;"
+>
+
+    <h2>Pedidos recibidos</h2>
+
+    <p id="estado-pedidos">
+        Cargando pedidos...
+    </p>
+
+    <div id="lista-pedidos"></div>
+
+</section>
+
+    </main>
+
+    <script
+        type="module"
+        src="./js/admin.js"
+    ></script>
+
+</body>
+
+</html>
