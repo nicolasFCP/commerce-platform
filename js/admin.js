@@ -138,18 +138,73 @@ async function cargarPedidos() {
             }
 
             <span class="estado-pedido">
-                ${pedido.status}
-            </span>
+    ${pedido.status}
+</span>
 
-            <div class="pedido-total">
-                Total:
-                ${formatearPrecio(pedido.total)}
-            </div>
+<div class="pedido-total">
+    Total:
+    ${formatearPrecio(pedido.total)}
+</div>
+
+${
+    pedido.status === 'pending'
+        ? `
+            <button
+                class="aceptar-pedido"
+                data-order-id="${pedido.id}"
+            >
+                Aceptar pedido
+            </button>
+        `
+        : ''
+}
 
         </article>
 
     `).join('');
 }
+listaPedidos.addEventListener('click', async event => {
+
+    const boton = event.target.closest('.aceptar-pedido');
+
+    if (!boton) {
+        return;
+    }
+
+
+    const orderId = boton.dataset.orderId;
+
+    boton.disabled = true;
+    boton.textContent = 'Aceptando...';
+
+
+    const {
+        error
+    } = await supabase.rpc(
+        'change_order_status',
+        {
+            p_order_id: orderId,
+            p_new_status: 'accepted',
+            p_reason: null
+        }
+    );
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert('No se pudo aceptar el pedido.');
+
+        boton.disabled = false;
+        boton.textContent = 'Aceptar pedido';
+
+        return;
+    }
+
+
+    await cargarPedidos();
+});
 
 
 function formatearPrecio(value) {

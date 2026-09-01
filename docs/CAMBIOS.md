@@ -149,3 +149,16 @@ Fecha: 1 de septiembre de 2026
 - Los pedidos son consultados mediante la sesión autenticada y RLS.
 - Se verificó que Mercado Demo puede visualizar sus pedidos recibidos.
 - El panel muestra cliente, teléfono, dirección, notas, estado y total.
+
+## Versión 0.0.14
+
+Fecha: 1 de septiembre de 2026
+
+- Se creó `public.change_order_status()`.
+- Se implementaron transiciones controladas de estados de pedidos.
+- Se verificó que únicamente usuarios pertenecientes al comercio puedan administrar sus pedidos.
+- Se agregó el botón `Aceptar pedido` al panel administrativo.
+- Se cambió correctamente un pedido de `pending` a `accepted` desde el navegador.
+- Se registró automáticamente el evento `status_changed`.
+- Se guardaron `from_status`, `to_status`, `actor_type` y `actor_user_id`.
+- Se verificó que el historial identifica al usuario administrativo que realizó el cambio.

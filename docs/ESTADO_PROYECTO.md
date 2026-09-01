@@ -262,3 +262,14 @@ commerce-platform/
 - Los pedidos son obtenidos directamente desde Supabase.
 - El acceso está limitado mediante Row Level Security.
 - Se muestran nombre del cliente, teléfono, dirección, notas, estado y total.
+
+## 22. Gestión inicial de estados
+
+- Se creó la función segura `public.change_order_status()`.
+- La función verifica que el usuario autenticado pertenezca al comercio del pedido.
+- Se definieron transiciones válidas entre estados.
+- Se impiden cambios arbitrarios de estado.
+- El panel administrativo permite aceptar pedidos pendientes.
+- Se verificó el cambio `pending → accepted`.
+- Cada cambio genera automáticamente un registro en `order_events`.
+- El historial registra al usuario administrativo responsable mediante `actor_user_id`.
