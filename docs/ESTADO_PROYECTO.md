@@ -58,6 +58,12 @@ PASO 2 — Base de datos con Supabase.
 - Se protegió la relación pedido → producto para impedir cruces entre comercios.
 - Se ejecutaron pruebas temporales multi-comercio mediante transacción y `ROLLBACK`.
 - Se verificó correctamente el aislamiento de datos entre comercios.
+- Se creó el sistema de membresías de comercios mediante `store_members`.
+- Se integró Supabase Auth con los comercios.
+- Se creó el primer usuario `owner` de prueba para `Mercado Demo`.
+- Se implementó aislamiento multi-comercio mediante Row Level Security (RLS).
+- Se protegieron las tablas `stores`, `categories`, `products`, `customers`, `orders`, `order_items` y `order_events`.
+- Se verificó mediante pruebas que un comercio no puede consultar información perteneciente a otro comercio.
 ---
 
 ## Tabla `stores`
@@ -266,4 +272,10 @@ Mercado Demo
 
 ## Próximo objetivo
 
-Configurar Row Level Security (RLS) y políticas de acceso antes de conectar el frontend con Supabase.
+Configurar el acceso público de clientes:
+
+- consultar comercios activos
+- consultar categorías activas
+- consultar productos activos y disponibles
+- crear pedidos de forma segura
+- evitar que el cliente tenga permisos administrativos

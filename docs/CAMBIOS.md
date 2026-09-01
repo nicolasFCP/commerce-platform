@@ -92,3 +92,19 @@ Fecha: 1 de septiembre de 2026
 - Se blindaron las relaciones multi-comercio.
 - Se agregaron triggers de validación para pedidos, clientes y productos.
 - Se verificó el aislamiento multi-comercio mediante pruebas temporales con `ROLLBACK`.
+
+## Versión 0.0.10
+
+Fecha: 1 de septiembre de 2026
+
+- Se creó la tabla `store_members`.
+- Se conectó `store_members` con `stores` y `auth.users`.
+- Se agregaron roles `owner` y `staff`.
+- Se vinculó el primer usuario autenticado con `Mercado Demo`.
+- Se creó la función privada `private.user_store_ids()`.
+- Se implementó RLS para `stores`.
+- Se implementó RLS para `categories` y `products`.
+- Se implementó RLS para `customers` y `orders`.
+- Se implementó RLS para `order_items` y `order_events`.
+- Se verificó mediante pruebas con `ROLLBACK` que un comercio no puede acceder a información de otro comercio.
+- Se verificó correctamente el acceso del owner de `Mercado Demo` a sus clientes, pedidos, productos e historial.
