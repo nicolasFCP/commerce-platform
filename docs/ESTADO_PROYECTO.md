@@ -2,280 +2,252 @@
 
 ## Estado actual
 
-Proyecto en desarrollo.
+Commerce Platform se encuentra en desarrollo y ya cuenta con un primer MVP técnico funcional conectado a Supabase.
+
+Actualmente existe una base de datos multi-comercio protegida con Row Level Security (RLS), autenticación administrativa mediante Supabase Auth, catálogo público y un flujo funcional de pedidos desde el navegador.
+
+El sistema ya permite que un visitante:
+
+- consulte un comercio activo;
+- consulte sus categorías;
+- consulte sus productos disponibles;
+- agregue productos a un carrito;
+- cambie cantidades;
+- ingrese sus datos;
+- realice un pedido;
+- y que el pedido quede registrado correctamente en Supabase.
+
+Los precios y totales definitivos son calculados y validados en la base de datos, no en el navegador.
+
+---
 
 ## Paso actual
 
-PASO 2 — Base de datos con Supabase.
+PASO 2.11 — Frontend público conectado a Supabase y pedidos reales funcionando.
 
-### Completado
+---
+
+# Completado
+
+## 1. Base de datos inicial
 
 - Proyecto Supabase creado.
 - Base de datos PostgreSQL activa.
 - Row Level Security (RLS) habilitado.
 - Se creó la tabla `stores`.
-- Se insertó correctamente el primer comercio de prueba: `Mercado Demo`.
+- Se insertó el primer comercio de prueba: `Mercado Demo`.
 - Se verificó la generación automática de UUID y `created_at`.
 
+---
+
+## 2. Categorías
+
 - Se creó la tabla `categories`.
-- Se relacionó `categories.store_id` con `stores.id` mediante Foreign Key.
+- Se relacionó `categories.store_id` con `stores.id`.
 - Se configuró actualización y eliminación en cascada.
-- Se creó la categoría de prueba `Bebidas` vinculada correctamente a `Mercado Demo`.
+- Se creó la categoría de prueba `Bebidas`.
+- Se verificó la relación comercio → categoría.
+
+---
+
+## 3. Productos
 
 - Se creó la tabla `products`.
 - Se relacionó `products.store_id` con `stores.id`.
 - Se relacionó `products.category_id` con `categories.id`.
 - Se creó el producto de prueba `Coca-Cola 1.5L`.
-- Se verificó correctamente la relación comercio → categoría → producto.
+- Se verificó la relación comercio → categoría → producto.
+
+---
+
+## 4. Clientes
 
 - Se creó la tabla `customers`.
 - Se relacionó `customers.store_id` con `stores.id`.
 - Se creó el cliente de prueba `Cliente Demo`.
-- Se verificó correctamente la relación comercio → cliente.
+- Se verificó la relación comercio → cliente.
+
+---
+
+## 5. Pedidos
+
 - Se creó la tabla `orders`.
 - Se relacionó `orders.store_id` con `stores.id`.
 - Se relacionó `orders.customer_id` con `customers.id`.
-- Se configuró `Set NULL` al eliminar un cliente para conservar el historial de pedidos.
+- Se configuró `SET NULL` al eliminar un cliente para conservar el historial.
 - Se creó correctamente el primer pedido de prueba.
-- Se verificó el cálculo de subtotal, domicilio y total.
+- Se verificaron subtotal, domicilio y total.
+
+---
+
+## 6. Productos dentro de pedidos
+
 - Se creó la tabla `order_items`.
 - Se relacionó `order_items.order_id` con `orders.id`.
 - Se relacionó `order_items.product_id` con `products.id`.
-- Se configuró conservación del historial del producto mediante `Set NULL`.
-- Se vinculó correctamente `Coca-Cola 1.5L` al primer pedido de prueba.
-- Se verificó cantidad, precio unitario y total de línea.
+- Se configuró `SET NULL` para conservar el historial si un producto desaparece.
+- Se vinculó `Coca-Cola 1.5L` al primer pedido.
+- Se verificaron cantidad, precio unitario y total de línea.
+
+---
+
+## 7. Historial de pedidos
+
 - Se creó la tabla `order_events`.
 - Se relacionó `order_events.order_id` con `orders.id`.
-- Se creó el primer evento del pedido de prueba.
-- Se registró correctamente el evento `created` con estado inicial `pending`.
-- Se verificó que el historial del pedido funciona de forma independiente al estado actual.
+- Se creó el primer evento de pedido.
+- Se registró correctamente el evento `created`.
+- Se registró el estado inicial `pending`.
+- Se verificó que el historial funciona independientemente del estado actual del pedido.
+
+---
+
+## 8. Reglas de integridad
+
 - Se restringieron los estados permitidos de los pedidos.
-- Se restringió `fulfillment_type` a `delivery` o `pickup`.
-- Se impidieron cantidades, precios y totales negativos.
+- Se restringió `fulfillment_type` a:
+  - `delivery`
+  - `pickup`
+- Se impidieron cantidades negativas.
+- Se impidieron precios negativos.
+- Se impidieron subtotales negativos.
+- Se impidieron costos de domicilio negativos.
+- Se impidieron totales negativos.
 - Se agregaron reglas de unicidad por comercio.
-- Se protegió la relación producto → categoría para impedir cruces entre comercios.
-- Se protegió la relación pedido → cliente para impedir cruces entre comercios.
-- Se protegió la relación pedido → producto para impedir cruces entre comercios.
-- Se ejecutaron pruebas temporales multi-comercio mediante transacción y `ROLLBACK`.
-- Se verificó correctamente el aislamiento de datos entre comercios.
-- Se creó el sistema de membresías de comercios mediante `store_members`.
-- Se integró Supabase Auth con los comercios.
-- Se creó el primer usuario `owner` de prueba para `Mercado Demo`.
-- Se implementó aislamiento multi-comercio mediante Row Level Security (RLS).
-- Se protegieron las tablas `stores`, `categories`, `products`, `customers`, `orders`, `order_items` y `order_events`.
-- Se verificó mediante pruebas que un comercio no puede consultar información perteneciente a otro comercio.
----
-
-## Tabla `stores`
-
-Guarda los comercios registrados en la plataforma.
-
-### Columnas
-
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `name`: nombre del comercio.
-- `slug`: identificador único del comercio para URL.
-- `phone`: teléfono del comercio.
-- `logo_url`: dirección del logo, opcional.
-- `primary_color`: color principal del comercio.
-- `active`: indica si el comercio está activo.
-
-### Ejemplo actual
-
-- Comercio: `Mercado Demo`
-- Slug: `mercado-demo`
 
 ---
 
-## Tabla `categories`
+## 9. Protección multi-comercio
 
-Guarda las categorías de productos de cada comercio.
-
-### Columnas
-
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `store_id`: identifica a qué comercio pertenece la categoría.
-- `name`: nombre de la categoría.
-- `slug`: identificador de la categoría.
-- `active`: indica si la categoría está activa.
-
-### Relaciones
-
-- `categories.store_id → stores.id`
-
-### Ejemplo actual
-
-- Comercio: `Mercado Demo`
-- Categoría: `Bebidas`
+- Se protegió la relación producto → categoría.
+- Se impidió relacionar productos con categorías de otro comercio.
+- Se protegió la relación pedido → cliente.
+- Se impidió relacionar pedidos con clientes de otro comercio.
+- Se protegió la relación pedido → producto.
+- Se impidió agregar productos de otro comercio a un pedido.
+- Se ejecutaron pruebas multi-comercio mediante transacciones y `ROLLBACK`.
+- Se verificó correctamente el aislamiento entre comercios.
 
 ---
 
-## Tabla `products`
+## 10. Usuarios administrativos
 
-Guarda los productos de cada comercio.
-
-### Columnas
-
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `store_id`: identifica a qué comercio pertenece el producto.
-- `category_id`: identifica a qué categoría pertenece.
-- `name`: nombre del producto.
-- `description`: descripción opcional.
-- `price`: precio del producto.
-- `image_url`: dirección opcional de la imagen.
-- `available`: indica si el producto está disponible.
-- `active`: indica si el producto está activo.
-
-### Relaciones
-
-- `products.store_id → stores.id`
-- `products.category_id → categories.id`
-
-### Ejemplo actual
-
-- Comercio: `Mercado Demo`
-- Categoría: `Bebidas`
-- Producto: `Coca-Cola 1.5L`
-- Precio: `$6.500`
+- Se creó la tabla `store_members`.
+- Se integró Supabase Auth.
+- Se relacionó `store_members.store_id` con `stores.id`.
+- Se relacionó `store_members.user_id` con `auth.users.id`.
+- Se creó el primer usuario administrativo de prueba.
+- Se asignó el rol `owner` a Mercado Demo.
+- Se agregó la posibilidad de activar o desactivar membresías.
+- Se agregó unicidad por combinación comercio + usuario.
 
 ---
 
-## Tabla `customers`
+## 11. Row Level Security administrativo
 
-Guarda los clientes que realizan pedidos en cada comercio.
+Se implementó aislamiento multi-comercio mediante RLS.
 
-### Columnas
+Se protegieron las tablas:
 
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `store_id`: identifica a qué comercio pertenece el cliente.
-- `name`: nombre del cliente.
-- `phone`: teléfono del cliente.
-- `email`: correo electrónico opcional.
-- `active`: indica si el cliente está activo.
+- `stores`
+- `categories`
+- `products`
+- `customers`
+- `orders`
+- `order_items`
+- `order_events`
+- `store_members`
 
-### Relaciones
+Se creó lógica para identificar los comercios a los que pertenece cada usuario autenticado.
 
-- `customers.store_id → stores.id`
+Se verificó que:
 
-### Ejemplo actual
+- un usuario administrativo puede acceder a su comercio;
+- puede consultar sus categorías;
+- puede consultar sus productos;
+- puede consultar sus clientes;
+- puede consultar sus pedidos;
+- puede consultar los detalles de los pedidos;
+- puede consultar el historial de los pedidos;
+- no puede consultar información perteneciente a otro comercio.
 
-- Comercio: `Mercado Demo`
-- Cliente: `Cliente Demo`
-- Teléfono: `3001234567`
+---
 
--------
-## Tabla `orders`
+## 12. Catálogo público
 
-Guarda la información principal de cada pedido.
+Se habilitó acceso público mediante el rol `anon`.
 
-### Columnas
+Los visitantes pueden consultar:
 
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `store_id`: identifica el comercio que recibe el pedido.
-- `customer_id`: referencia opcional al cliente registrado.
-- `customer_name`: nombre del cliente en el momento de la compra.
-- `customer_phone`: teléfono del cliente en el momento de la compra.
-- `customer_email`: correo opcional del cliente.
-- `fulfillment_type`: forma de entrega (`delivery` o `pickup`).
-- `delivery_address`: dirección de entrega, opcional.
-- `notes`: observaciones del pedido.
-- `status`: estado actual del pedido.
-- `subtotal`: valor de productos.
-- `delivery_fee`: costo del domicilio.
-- `total`: valor total del pedido.
+- comercios activos;
+- categorías activas;
+- productos activos;
+- productos disponibles.
 
-### Relaciones
+Los visitantes no reciben permisos administrativos.
 
-- `orders.store_id → stores.id`
-- `orders.customer_id → customers.id`
+---
 
-### Ejemplo actual
+## 13. Creación segura de pedidos públicos
 
-- Comercio: `Mercado Demo`
-- Cliente: `Cliente Demo`
-- Tipo: `delivery`
-- Estado: `pending`
-- Subtotal: `$6.500`
-- Domicilio: `$3.000`
-- Total: `$9.500`
--------
-## Tabla `order_items`
+Se creó la función:
 
-Guarda los productos contenidos dentro de cada pedido.
+`public.place_order()`
 
-### Columnas
+Esta función permite recibir pedidos desde el frontend sin entregar permisos directos de escritura sobre las tablas internas.
 
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha de creación automática.
-- `order_id`: identifica a qué pedido pertenece el producto.
-- `product_id`: referencia opcional al producto actual del catálogo.
-- `product_name`: nombre del producto en el momento de la compra.
-- `quantity`: cantidad comprada.
-- `unit_price`: precio unitario en el momento de la compra.
-- `line_total`: valor total de esa línea del pedido.
+La función:
 
-### Relaciones
+- valida que el comercio exista;
+- valida que el comercio esté activo;
+- valida el tipo de entrega;
+- valida que existan productos;
+- valida cantidades;
+- valida que los productos pertenezcan al comercio;
+- valida que los productos estén activos;
+- valida que los productos estén disponibles;
+- obtiene los precios directamente desde la base de datos;
+- calcula los totales en el servidor;
+- crea o relaciona al cliente;
+- crea el pedido;
+- crea los elementos del pedido;
+- crea el evento inicial del pedido.
 
-- `order_items.order_id → orders.id`
-- `order_items.product_id → products.id`
+El navegador no decide el precio definitivo del pedido.
 
-### Ejemplo actual
+---
 
-- Producto: `Coca-Cola 1.5L`
-- Cantidad: `1`
-- Precio unitario: `$6.500`
-- Total línea: `$6.500`
-------------------------------
-## Tabla `order_events`
+## 14. Pruebas de pedidos públicos
 
-Guarda el historial de eventos y cambios de estado de cada pedido.
+Se realizaron pruebas mediante transacciones y `ROLLBACK`.
 
-### Columnas
+Se verificó que:
 
-- `id`: uuid, clave primaria, generado automáticamente.
-- `created_at`: fecha y hora automática del evento.
-- `order_id`: identifica el pedido al que pertenece el evento.
-- `event_type`: tipo de evento ocurrido.
-- `from_status`: estado anterior, opcional.
-- `to_status`: nuevo estado, opcional.
-- `actor_type`: identifica quién realizó la acción.
-- `actor_user_id`: identificador opcional del usuario que realizó la acción.
-- `reason`: motivo opcional del evento.
+- un visitante puede crear un pedido;
+- los productos se registran correctamente;
+- las cantidades se respetan;
+- los precios provienen de Supabase;
+- los totales son calculados correctamente;
+- se crea el evento inicial;
+- una prueba puede revertirse sin dejar datos temporales.
 
-### Relaciones
+---
 
-- `order_events.order_id → orders.id`
+## 15. Frontend conectado a Supabase
 
-### Ejemplo actual
+Se conectó un frontend HTML + CSS + JavaScript directamente con Supabase.
 
-- Evento: `created`
-- Estado anterior: `NULL`
-- Estado nuevo: `pending`
-- Actor: `system`
--------------
-
-## Estructura actual de datos
+Archivos principales actuales:
 
 ```text
-Mercado Demo
+commerce-platform/
 │
-└── Bebidas
-    │
-    └── Coca-Cola 1.5L
-        └── $6.500
-
-
-## Próximo objetivo
-
-Configurar el acceso público de clientes:
-
-- consultar comercios activos
-- consultar categorías activas
-- consultar productos activos y disponibles
-- crear pedidos de forma segura
-- evitar que el cliente tenga permisos administrativos
+├── demo.html
+│
+├── js/
+│   ├── supabase.js
+│   └── catalogo.js
+│
+├── css/
+├── docs/
+└── sql/

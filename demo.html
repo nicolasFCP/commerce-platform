@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Commerce Platform - Demo</title>
 
@@ -21,7 +26,7 @@
         main {
             width: min(100% - 32px, 700px);
             margin: 0 auto;
-            padding: 32px 0;
+            padding: 32px 0 120px;
         }
 
         .store {
@@ -61,6 +66,93 @@
         .precio {
             font-size: 20px;
             font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .agregar {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #111827;
+            color: white;
+        }
+
+        .carrito {
+            margin-top: 32px;
+            background: white;
+            padding: 22px;
+            border-radius: 18px;
+        }
+
+        .carrito h2 {
+            margin-top: 0;
+        }
+
+        #carrito-vacio {
+            color: #6b7280;
+        }
+
+        .item-carrito {
+            padding: 14px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .item-carrito:last-child {
+            border-bottom: none;
+        }
+
+        .item-carrito-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .controles {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .controles button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 2px solid #111827;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #continuar-pedido {
+            width: 100%;
+            margin-top: 18px;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #111827;
+            color: white;
+            cursor: pointer;
+        }
+
+        #continuar-pedido:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -70,15 +162,53 @@
     <main>
 
         <header class="store">
-            <h1 id="nombre-comercio">Cargando comercio...</h1>
-            <div id="estado">Conectando con Supabase...</div>
+
+            <h1 id="nombre-comercio">
+                Cargando comercio...
+            </h1>
+
+            <div id="estado">
+                Conectando con Supabase...
+            </div>
+
         </header>
+
 
         <div id="catalogo"></div>
 
+
+        <section class="carrito">
+
+            <h2>Tu pedido</h2>
+
+            <p id="carrito-vacio">
+                Todavía no has agregado productos.
+            </p>
+
+            <div id="items-carrito"></div>
+
+            <div class="total">
+                <span>Total</span>
+                <span id="total-carrito">$ 0</span>
+            </div>
+
+            <button
+                id="continuar-pedido"
+                disabled
+            >
+                Continuar pedido
+            </button>
+
+        </section>
+
     </main>
 
-    <script type="module" src="./js/catalogo.js"></script>
+
+    <script
+        type="module"
+        src="./js/catalogo.js"
+    ></script>
 
 </body>
+
 </html>

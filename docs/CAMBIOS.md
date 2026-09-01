@@ -123,3 +123,17 @@ Fecha: 1 de septiembre de 2026
 - Se validan comercio, productos, disponibilidad, cantidades y tipo de entrega.
 - Se crea automáticamente el cliente, pedido, detalle del pedido e historial inicial.
 - Se verificó mediante una prueba con `ROLLBACK` la creación segura de un pedido público.
+
+## Versión 0.0.12
+
+Fecha: 1 de septiembre de 2026
+
+- Se conectó el frontend HTML/JavaScript con Supabase.
+- Se creó una demo pública de comercio.
+- El catálogo carga comercios, categorías y productos directamente desde la base de datos.
+- Se implementó un carrito con control de cantidades.
+- Se agregó formulario para nombre, teléfono, dirección y notas.
+- El frontend utiliza `public.place_order()` para crear pedidos.
+- Se realizó el primer pedido real desde el navegador.
+- Se verificó la creación correcta en `orders`, `order_items` y `order_events`.
+- Los precios y totales continúan siendo calculados y validados por la base de datos.
