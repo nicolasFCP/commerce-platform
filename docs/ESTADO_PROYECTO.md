@@ -49,6 +49,15 @@ PASO 2 — Base de datos con Supabase.
 - Se creó el primer evento del pedido de prueba.
 - Se registró correctamente el evento `created` con estado inicial `pending`.
 - Se verificó que el historial del pedido funciona de forma independiente al estado actual.
+- Se restringieron los estados permitidos de los pedidos.
+- Se restringió `fulfillment_type` a `delivery` o `pickup`.
+- Se impidieron cantidades, precios y totales negativos.
+- Se agregaron reglas de unicidad por comercio.
+- Se protegió la relación producto → categoría para impedir cruces entre comercios.
+- Se protegió la relación pedido → cliente para impedir cruces entre comercios.
+- Se protegió la relación pedido → producto para impedir cruces entre comercios.
+- Se ejecutaron pruebas temporales multi-comercio mediante transacción y `ROLLBACK`.
+- Se verificó correctamente el aislamiento de datos entre comercios.
 ---
 
 ## Tabla `stores`
@@ -257,8 +266,4 @@ Mercado Demo
 
 ## Próximo objetivo
 
-Crear la estructura de pedidos:
-
-- `orders`
-- `order_items`
-- `order_events`
+Configurar Row Level Security (RLS) y políticas de acceso antes de conectar el frontend con Supabase.

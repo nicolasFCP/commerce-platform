@@ -81,3 +81,14 @@ Fecha: 31 de agosto de 2026
 - Se creó el primer evento del pedido de prueba.
 - Se registró el evento `created → pending`.
 - Se verificó el historial básico de pedidos.
+
+## Versión 0.0.9
+
+Fecha: 1 de septiembre de 2026
+
+- Se agregaron restricciones de estados y tipos de entrega.
+- Se bloquearon cantidades, precios y valores negativos.
+- Se agregaron reglas de unicidad por comercio.
+- Se blindaron las relaciones multi-comercio.
+- Se agregaron triggers de validación para pedidos, clientes y productos.
+- Se verificó el aislamiento multi-comercio mediante pruebas temporales con `ROLLBACK`.
