@@ -108,3 +108,18 @@ Fecha: 1 de septiembre de 2026
 - Se implementó RLS para `order_items` y `order_events`.
 - Se verificó mediante pruebas con `ROLLBACK` que un comercio no puede acceder a información de otro comercio.
 - Se verificó correctamente el acceso del owner de `Mercado Demo` a sus clientes, pedidos, productos e historial.
+
+## Versión 0.0.11
+
+Fecha: 1 de septiembre de 2026
+
+- Se habilitó el catálogo público para visitantes anónimos.
+- Se permitió consultar comercios activos.
+- Se permitió consultar categorías activas.
+- Se permitió consultar productos activos y disponibles.
+- Se verificó el acceso público mediante el rol `anon`.
+- Se creó `public.place_order()` para recibir pedidos públicos.
+- Los precios y totales son calculados por la base de datos y no por el navegador.
+- Se validan comercio, productos, disponibilidad, cantidades y tipo de entrega.
+- Se crea automáticamente el cliente, pedido, detalle del pedido e historial inicial.
+- Se verificó mediante una prueba con `ROLLBACK` la creación segura de un pedido público.
