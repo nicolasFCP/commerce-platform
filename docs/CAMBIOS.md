@@ -177,3 +177,16 @@ Fecha: 1 de septiembre de 2026
 - Se verificó en `order_events` el historial completo del ciclo de un pedido a domicilio.
 - Cada cambio de estado registra al usuario administrativo responsable.
 - Se completó correctamente el primer ciclo operativo completo de un pedido desde el frontend.
+
+## Versión 0.0.16
+
+Fecha: 1 de septiembre de 2026
+
+- Se publicó Commerce Platform en GitHub.
+- Se activó GitHub Pages desde la rama `main`.
+- Se verificó el catálogo conectado a Supabase desde Internet.
+- Se verificó el panel administrativo desde Internet.
+- Se verificó el inicio de sesión del comercio desde la versión pública.
+- Se verificó la consulta de pedidos mediante RLS desde GitHub Pages.
+- Commerce Platform ya cuenta con una demo pública accesible sin servidor local.
+- Se agregó `index.html` para redirigir la URL principal al catálogo.

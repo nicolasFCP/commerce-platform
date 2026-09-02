@@ -301,3 +301,30 @@ El historial conserva:
 - fecha y hora del cambio.
 
 El primer pedido real creado desde el frontend completó correctamente todo el ciclo operativo.
+
+## 24. Publicación web
+
+Commerce Platform fue publicada mediante GitHub Pages.
+
+URL principal:
+
+`https://nicolasfcp.github.io/commerce-platform/`
+
+Catálogo:
+
+`https://nicolasfcp.github.io/commerce-platform/demo.html`
+
+Panel administrativo:
+
+`https://nicolasfcp.github.io/commerce-platform/admin.html`
+
+Se verificó desde Internet:
+
+- carga del comercio;
+- carga de categorías y productos;
+- conexión con Supabase;
+- acceso administrativo mediante Supabase Auth;
+- consulta de pedidos protegida mediante RLS;
+- funcionamiento de las acciones administrativas.
+
+El proyecto ya no depende de un servidor local para realizar demostraciones comerciales.
