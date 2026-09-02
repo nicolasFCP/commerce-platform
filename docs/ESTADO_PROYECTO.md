@@ -273,3 +273,31 @@ commerce-platform/
 - Se verificó el cambio `pending → accepted`.
 - Cada cambio genera automáticamente un registro en `order_events`.
 - El historial registra al usuario administrativo responsable mediante `actor_user_id`.
+
+## 23. Ciclo operativo completo de pedidos
+
+- El panel determina automáticamente qué acción corresponde según el estado del pedido.
+- Los pedidos `pending` pueden ser aceptados.
+- Los pedidos `accepted` pueden pasar a preparación.
+- Los pedidos `preparing` pueden marcarse como listos.
+- Los pedidos `ready` con entrega a domicilio pueden marcarse como enviados.
+- Los pedidos `out_for_delivery` pueden marcarse como entregados.
+- Los pedidos `completed` dejan de mostrar acciones adicionales.
+
+Se verificó correctamente el ciclo:
+
+`pending → accepted → preparing → ready → out_for_delivery → completed`
+
+Cada transición se ejecuta mediante `public.change_order_status()`.
+
+Cada cambio genera automáticamente un registro en `order_events`.
+
+El historial conserva:
+
+- estado anterior;
+- estado nuevo;
+- tipo de actor;
+- usuario responsable;
+- fecha y hora del cambio.
+
+El primer pedido real creado desde el frontend completó correctamente todo el ciclo operativo.

@@ -61,6 +61,78 @@ async function iniciarSesion(event) {
 
 await cargarPedidos();
 }
+
+function crearBotonAccion(pedido) {
+
+    let siguienteEstado = null;
+    let texto = null;
+
+
+    if (pedido.status === 'pending') {
+
+        siguienteEstado = 'accepted';
+        texto = 'Aceptar pedido';
+
+    }
+
+
+    else if (pedido.status === 'accepted') {
+
+        siguienteEstado = 'preparing';
+        texto = 'Empezar preparación';
+
+    }
+
+
+    else if (pedido.status === 'preparing') {
+
+        siguienteEstado = 'ready';
+        texto = 'Marcar como listo';
+
+    }
+
+
+    else if (pedido.status === 'ready') {
+
+        if (pedido.fulfillment_type === 'delivery') {
+
+            siguienteEstado = 'out_for_delivery';
+            texto = 'Salió a domicilio';
+
+        } else {
+
+            siguienteEstado = 'completed';
+            texto = 'Completar pedido';
+
+        }
+
+    }
+
+
+    else if (pedido.status === 'out_for_delivery') {
+
+        siguienteEstado = 'completed';
+        texto = 'Marcar como entregado';
+
+    }
+
+
+    if (!siguienteEstado) {
+        return '';
+    }
+
+
+    return `
+        <button
+            class="cambiar-estado-pedido"
+            data-order-id="${pedido.id}"
+            data-next-status="${siguienteEstado}"
+        >
+            ${texto}
+        </button>
+    `;
+}
+
 async function cargarPedidos() {
 
     estadoPedidos.textContent = 'Cargando pedidos...';
@@ -146,18 +218,7 @@ async function cargarPedidos() {
     ${formatearPrecio(pedido.total)}
 </div>
 
-${
-    pedido.status === 'pending'
-        ? `
-            <button
-                class="aceptar-pedido"
-                data-order-id="${pedido.id}"
-            >
-                Aceptar pedido
-            </button>
-        `
-        : ''
-}
+${crearBotonAccion(pedido)}
 
         </article>
 
@@ -165,7 +226,10 @@ ${
 }
 listaPedidos.addEventListener('click', async event => {
 
-    const boton = event.target.closest('.aceptar-pedido');
+    const boton = event.target.closest(
+        '.cambiar-estado-pedido'
+    );
+
 
     if (!boton) {
         return;
@@ -174,8 +238,14 @@ listaPedidos.addEventListener('click', async event => {
 
     const orderId = boton.dataset.orderId;
 
+    const nextStatus = boton.dataset.nextStatus;
+
+
+    const textoOriginal = boton.textContent;
+
+
     boton.disabled = true;
-    boton.textContent = 'Aceptando...';
+    boton.textContent = 'Actualizando...';
 
 
     const {
@@ -184,7 +254,7 @@ listaPedidos.addEventListener('click', async event => {
         'change_order_status',
         {
             p_order_id: orderId,
-            p_new_status: 'accepted',
+            p_new_status: nextStatus,
             p_reason: null
         }
     );
@@ -194,10 +264,10 @@ listaPedidos.addEventListener('click', async event => {
 
         console.error(error);
 
-        alert('No se pudo aceptar el pedido.');
+        alert('No se pudo actualizar el pedido.');
 
         boton.disabled = false;
-        boton.textContent = 'Aceptar pedido';
+        boton.textContent = textoOriginal;
 
         return;
     }

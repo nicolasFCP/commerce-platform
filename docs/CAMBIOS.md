@@ -162,3 +162,18 @@ Fecha: 1 de septiembre de 2026
 - Se registró automáticamente el evento `status_changed`.
 - Se guardaron `from_status`, `to_status`, `actor_type` y `actor_user_id`.
 - Se verificó que el historial identifica al usuario administrativo que realizó el cambio.
+
+## Versión 0.0.15
+
+Fecha: 1 de septiembre de 2026
+
+- Se convirtió la gestión de pedidos en un flujo dinámico según el estado actual.
+- El panel administrativo muestra automáticamente la acción correspondiente a cada pedido.
+- Se verificó el flujo `accepted → preparing`.
+- Se verificó el flujo `preparing → ready`.
+- Se verificó el flujo `ready → out_for_delivery`.
+- Se verificó el flujo `out_for_delivery → completed`.
+- Los pedidos completados dejan de mostrar acciones administrativas.
+- Se verificó en `order_events` el historial completo del ciclo de un pedido a domicilio.
+- Cada cambio de estado registra al usuario administrativo responsable.
+- Se completó correctamente el primer ciclo operativo completo de un pedido desde el frontend.
