@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,176 +10,520 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Commerce Platform - Administración</title>
+    <title>
+        Commerce Platform - Administración
+    </title>
+
 
     <style>
+
+        /* =====================================================
+           CONFIGURACIÓN GENERAL
+        ===================================================== */
+
         * {
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
-            font-family: Arial, sans-serif;
+
+            font-family:
+                Arial,
+                sans-serif;
+
             background: #f5f5f5;
+
             color: #111827;
         }
 
+
         main {
-            width: min(100% - 32px, 500px);
-            margin: 0 auto;
-            padding: 60px 0;
+
+            width:
+                min(
+                    100% - 32px,
+                    500px
+                );
+
+            margin:
+                0 auto;
+
+            padding:
+                40px 0;
         }
+
+
+
+        /* =====================================================
+           PANELES
+        ===================================================== */
 
         .panel {
+
             background: white;
+
             padding: 28px;
+
             border-radius: 18px;
+
+            margin-bottom: 24px;
         }
 
-        h1 {
+
+        h1,
+        h2,
+        h3 {
+
             margin-top: 0;
         }
 
+
+
+        /* =====================================================
+           LOGIN
+        ===================================================== */
+
         form {
+
             display: grid;
+
             gap: 18px;
         }
 
+
         label {
+
             display: grid;
+
             gap: 8px;
+
             font-weight: bold;
         }
 
-        input {
+
+        input,
+select,
+textarea {
+
             width: 100%;
+
             padding: 14px;
-            border: 1px solid #d1d5db;
+
+            border:
+                1px solid #d1d5db;
+
             border-radius: 10px;
+
             font: inherit;
         }
 
+
         button {
+
             width: 100%;
+
             padding: 14px;
+
             border: none;
+
             border-radius: 12px;
+
             background: #111827;
+
             color: white;
+
             font-size: 16px;
+
             font-weight: bold;
+
             cursor: pointer;
         }
 
+
         button:disabled {
+
             opacity: 0.5;
-            cursor: not-allowed;
+
+            cursor:
+                not-allowed;
         }
+
 
         #mensaje {
+
             margin-top: 18px;
         }
+
+
+
+        /* =====================================================
+           PEDIDOS
+        ===================================================== */
+
         .pedido {
-    margin-top: 16px;
-    padding: 18px;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-}
 
-.pedido h3 {
-    margin: 0 0 10px;
-}
+            margin-top: 16px;
 
-.pedido p {
-    margin: 6px 0;
-}
+            padding: 18px;
 
-.pedido-total {
-    margin-top: 12px;
-    font-size: 18px;
-    font-weight: bold;
-}
+            border:
+                1px solid #e5e7eb;
 
-.estado-pedido {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 6px 10px;
-    background: #f3f4f6;
-    border-radius: 8px;
-    font-size: 14px;
+            border-radius: 14px;
+        }
+
+
+        .pedido h3 {
+
+            margin:
+                0 0 10px;
+        }
+
+
+        .pedido p {
+
+            margin:
+                6px 0;
+        }
+
+
+        .pedido-total {
+
+            margin-top: 12px;
+
+            font-size: 18px;
+
+            font-weight: bold;
+        }
+
+
+        .estado-pedido {
+
+            display: inline-block;
+
+            margin-top: 8px;
+
+            padding:
+                6px 10px;
+
+            background: #f3f4f6;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+        }
+
+
+        .cambiar-estado-pedido {
+
+            margin-top: 16px;
+        }
+
+
+
+        /* =====================================================
+           PRODUCTOS
+        ===================================================== */
+#crear-producto-section {
+
+    margin-bottom: 30px;
+
+    padding-bottom: 30px;
+
+    border-bottom:
+        1px solid #e5e7eb;
 }
-.cambiar-estado-pedido {
-    margin-top: 16px;
-}
+        #productos-section {
+
+            margin-top: 32px;
+
+            padding-top: 28px;
+
+            border-top:
+                1px solid #e5e7eb;
+        }
+
+
+        .producto-admin {
+
+            margin-top: 16px;
+
+            padding: 18px;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-radius: 14px;
+        }
+
+
+        .producto-admin h3 {
+
+            margin:
+                0 0 10px;
+        }
+
+
+        .producto-admin p {
+
+            margin:
+                6px 0;
+        }
+
+
     </style>
+
 </head>
+
 
 <body>
 
+
     <main>
+
+
+        <!-- =====================================================
+             LOGIN
+        ====================================================== -->
 
         <section class="panel">
 
-            <h1>Administración</h1>
+
+            <h1>
+                Administración
+            </h1>
+
 
             <p>
-                Ingresa para administrar tu comercio.
+                Ingresa para administrar
+                tu comercio.
             </p>
+
 
             <form id="login-form">
 
+
                 <label>
+
                     Correo
+
                     <input
                         id="email"
                         type="email"
                         required
                     >
+
                 </label>
 
+
                 <label>
+
                     Contraseña
+
                     <input
                         id="password"
                         type="password"
                         required
                     >
+
                 </label>
+
 
                 <button
                     id="login-button"
                     type="submit"
                 >
+
                     Iniciar sesión
+
                 </button>
+
 
             </form>
 
+
             <p id="mensaje"></p>
 
+
         </section>
+
+
+
+        <!-- =====================================================
+             PANEL DEL COMERCIO
+        ====================================================== -->
+
         <section
-    id="pedidos-panel"
-    class="panel"
-    style="display: none; margin-top: 24px;"
->
+            id="pedidos-panel"
+            class="panel"
+            style="display: none;"
+        >
 
-    <h2>Pedidos recibidos</h2>
 
-    <p id="estado-pedidos">
-        Cargando pedidos...
-    </p>
+            <!-- =================================================
+                 PEDIDOS
+            ================================================== -->
 
-    <div id="lista-pedidos"></div>
+            <section>
+
+
+                <h2>
+                    Pedidos recibidos
+                </h2>
+
+
+                <p id="estado-pedidos">
+
+                    Cargando pedidos...
+
+                </p>
+
+
+                <div
+                    id="lista-pedidos"
+                ></div>
+
+
+            </section>
+
+
+
+            <!-- =================================================
+                 PRODUCTOS
+            ================================================== -->
+
+            <section
+                id="productos-section"
+            >
+
+
+               <h2>
+    Productos
+</h2>
+
+
+<!-- =================================================
+     CREAR PRODUCTO
+================================================== -->
+
+<section id="crear-producto-section">
+
+    <h3>
+        Agregar producto
+    </h3>
+
+
+    <form id="producto-form">
+
+        <label>
+
+            Nombre
+
+            <input
+                id="producto-nombre"
+                type="text"
+                required
+                placeholder="Ej: Agua 600ml"
+            >
+
+        </label>
+
+
+        <label>
+
+            Categoría
+
+            <select
+                id="producto-categoria"
+                required
+            >
+                <option value="">
+                    Selecciona una categoría
+                </option>
+            </select>
+
+        </label>
+
+
+        <label>
+
+            Precio
+
+            <input
+                id="producto-precio"
+                type="number"
+                min="0"
+                step="100"
+                required
+                placeholder="Ej: 2500"
+            >
+
+        </label>
+
+
+        <label>
+
+            Descripción
+
+            <textarea
+                id="producto-descripcion"
+                rows="3"
+                placeholder="Opcional"
+            ></textarea>
+
+        </label>
+
+
+        <button
+            id="crear-producto-button"
+            type="submit"
+        >
+            Crear producto
+        </button>
+
+    </form>
+
+
+    <p id="producto-mensaje"></p>
 
 </section>
 
+
+<p id="productos-resumen">
+
+    Cargando productos...
+
+</p>
+
+
+<div
+    id="lista-productos"
+></div>
+
+
+
+            </section>
+
+
+        </section>
+
+
     </main>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
 
     <script
         type="module"
         src="./js/admin.js"
     ></script>
+
 
 </body>
 

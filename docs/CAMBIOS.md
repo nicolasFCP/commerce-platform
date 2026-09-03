@@ -190,3 +190,22 @@ Fecha: 1 de septiembre de 2026
 - Se verificó la consulta de pedidos mediante RLS desde GitHub Pages.
 - Commerce Platform ya cuenta con una demo pública accesible sin servidor local.
 - Se agregó `index.html` para redirigir la URL principal al catálogo.
+
+## Versión 0.0.17
+
+Fecha: 2 de septiembre de 2026
+
+- Se agregó la consulta de productos al panel administrativo.
+- El comercio puede visualizar sus productos desde su sesión autenticada.
+- Se creó `public.set_product_availability()`.
+- El comercio puede marcar productos como disponibles o agotados desde el panel.
+- Se verificó que los productos agotados dejan de aparecer automáticamente en el catálogo público.
+- Se verificó que al volver a marcar un producto como disponible aparece nuevamente en el catálogo.
+- Se creó `public.set_product_price()`.
+- El comercio puede modificar el precio de sus productos desde el panel administrativo.
+- Se verificó que los cambios de precio se reflejan automáticamente en el catálogo público.
+- Las operaciones de disponibilidad y precio verifican que el usuario pertenezca al comercio correspondiente.
+- Se creó `public.create_product()` como base segura para la creación de productos.
+- Se agregó al panel administrativo el formulario visual inicial para crear productos.
+- El formulario incluye nombre, categoría, precio y descripción.
+- La creación de productos desde el frontend todavía está pendiente de conectar con JavaScript.
