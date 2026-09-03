@@ -47,8 +47,11 @@ PASO 3.6 — Reportes básicos de ventas funcionando.
 
 Siguiente objetivo:
 
-PASO 3.7 — Análisis de productos y ventas.
+PASO 3.7 — Análisis de productos y ventas funcionando.
 
+Siguiente objetivo:
+
+PASO 3.8 — Automatizaciones y comunicación con clientes.
 ---
 
 # Completado
@@ -453,3 +456,29 @@ Con los datos actuales de Mercado Demo se verificó:
 - $19.500 de ticket promedio.
 
 Los cálculos respetan el acceso multi-comercio existente mediante RLS.
+
+---
+
+## 28. Análisis de productos vendidos
+
+Se agregó una sección de análisis de productos al panel administrativo.
+
+El sistema utiliza los pedidos completados y sus registros en `order_items` para analizar las ventas por producto.
+
+Actualmente se calcula:
+
+- producto más vendido;
+- cantidad de unidades vendidas;
+- ingresos generados por el producto más vendido.
+
+Los pedidos que todavía no han sido completados no se incluyen en este análisis.
+
+El sistema agrupa las unidades e ingresos de un mismo producto aunque aparezca en diferentes pedidos.
+
+Con los datos actuales de Mercado Demo se verificó:
+
+- producto más vendido: `Coca-Cola 1.5L`;
+- unidades vendidas: 3;
+- ingresos generados: $19.500.
+
+Esta información constituye una primera base para análisis comerciales y futuras funciones de inteligencia artificial.

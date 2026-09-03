@@ -78,6 +78,22 @@ const reporteTicketPromedio = document.querySelector(
 );
 
 // ======================================================
+// ELEMENTOS DEL ANÁLISIS DE PRODUCTOS
+// ======================================================
+
+const analisisProductoTop = document.querySelector(
+    '#analisis-producto-top'
+);
+
+const analisisUnidadesTop = document.querySelector(
+    '#analisis-unidades-top'
+);
+
+const analisisIngresosTop = document.querySelector(
+    '#analisis-ingresos-top'
+);
+
+// ======================================================
 // ELEMENTOS DEL FORMULARIO DE PRODUCTOS
 // ======================================================
 
@@ -185,6 +201,8 @@ async function iniciarSesion(event) {
     await cargarDashboard();
 
     await cargarReportes();
+
+    await cargarAnalisisProductos();
 }
 
 // ======================================================
@@ -476,6 +494,202 @@ async function cargarReportes() {
     reporteTicketPromedio.textContent =
         formatearPrecio(
             ticketPromedio
+        );
+}
+
+// ======================================================
+// CARGAR ANÁLISIS DE PRODUCTOS
+// ======================================================
+
+async function cargarAnalisisProductos() {
+
+    analisisProductoTop.textContent = '...';
+    analisisUnidadesTop.textContent = '...';
+    analisisIngresosTop.textContent = '...';
+
+
+    // ==================================================
+    // BUSCAR PEDIDOS COMPLETADOS
+    // ==================================================
+
+    const {
+        data: pedidosCompletados,
+        error: pedidosError
+    } = await supabase
+        .from('orders')
+        .select(`
+            id
+        `)
+        .eq(
+            'status',
+            'completed'
+        );
+
+
+    if (pedidosError) {
+
+        console.error(
+            'Error cargando pedidos completados:',
+            pedidosError
+        );
+
+        return;
+    }
+
+
+    if (
+        !pedidosCompletados
+        ||
+        pedidosCompletados.length === 0
+    ) {
+
+        analisisProductoTop.textContent =
+            'Sin ventas';
+
+        analisisUnidadesTop.textContent =
+            '0';
+
+        analisisIngresosTop.textContent =
+            formatearPrecio(0);
+
+        return;
+    }
+
+
+    const pedidosIds =
+        pedidosCompletados.map(
+            pedido => pedido.id
+        );
+
+
+    // ==================================================
+    // BUSCAR PRODUCTOS DE ESOS PEDIDOS
+    // ==================================================
+
+    const {
+        data: items,
+        error: itemsError
+    } = await supabase
+        .from('order_items')
+        .select(`
+            product_name,
+            quantity,
+            line_total
+        `)
+        .in(
+            'order_id',
+            pedidosIds
+        );
+
+
+    if (itemsError) {
+
+        console.error(
+            'Error cargando productos vendidos:',
+            itemsError
+        );
+
+        return;
+    }
+
+
+    if (
+        !items
+        ||
+        items.length === 0
+    ) {
+
+        analisisProductoTop.textContent =
+            'Sin ventas';
+
+        analisisUnidadesTop.textContent =
+            '0';
+
+        analisisIngresosTop.textContent =
+            formatearPrecio(0);
+
+        return;
+    }
+
+
+    // ==================================================
+    // AGRUPAR VENTAS POR PRODUCTO
+    // ==================================================
+
+    const productosVendidos = {};
+
+
+    items.forEach(
+        item => {
+
+            const nombre =
+                item.product_name;
+
+
+            if (!productosVendidos[nombre]) {
+
+                productosVendidos[nombre] = {
+                    unidades: 0,
+                    ingresos: 0
+                };
+            }
+
+
+            productosVendidos[nombre].unidades +=
+                Number(item.quantity);
+
+
+            productosVendidos[nombre].ingresos +=
+                Number(item.line_total);
+        }
+    );
+
+
+    // ==================================================
+    // ENCONTRAR EL PRODUCTO MÁS VENDIDO
+    // ==================================================
+
+    let nombreTop = null;
+    let unidadesTop = 0;
+    let ingresosTop = 0;
+
+
+    Object.entries(
+        productosVendidos
+    ).forEach(
+        ([nombre, datos]) => {
+
+            if (
+                datos.unidades > unidadesTop
+            ) {
+
+                nombreTop = nombre;
+
+                unidadesTop =
+                    datos.unidades;
+
+                ingresosTop =
+                    datos.ingresos;
+            }
+        }
+    );
+
+
+    // ==================================================
+    // MOSTRAR RESULTADOS
+    // ==================================================
+
+    analisisProductoTop.textContent =
+        nombreTop;
+
+
+    analisisUnidadesTop.textContent =
+        unidadesTop;
+
+
+    analisisIngresosTop.textContent =
+        formatearPrecio(
+            ingresosTop
         );
 }
 

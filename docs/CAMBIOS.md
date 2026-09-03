@@ -252,3 +252,17 @@ Fecha: 3 de septiembre de 2026
 - Los reportes utilizan información real de los pedidos almacenados en Supabase.
 - Solo los pedidos con estado `completed` se contabilizan como ventas.
 - Se verificó correctamente el funcionamiento de los reportes con los datos de Mercado Demo.
+
+## Versión 0.0.21
+
+Fecha: 3 de septiembre de 2026
+
+- Se agregó una sección de análisis de productos al panel administrativo.
+- Se conectó el análisis con las tablas `orders` y `order_items`.
+- Para los análisis de ventas solo se consideran pedidos con estado `completed`.
+- Se implementó el cálculo automático del producto más vendido.
+- Se implementó el cálculo de unidades vendidas del producto líder.
+- Se implementó el cálculo de ingresos generados por el producto líder.
+- Se agrupan automáticamente las ventas de un mismo producto entre diferentes pedidos completados.
+- Se verificó correctamente que `Coca-Cola 1.5L` es actualmente el producto más vendido.
+- Se verificaron 3 unidades vendidas y $19.500 en ingresos para dicho producto.
