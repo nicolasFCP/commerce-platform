@@ -157,7 +157,65 @@ textarea {
             margin-top: 18px;
         }
 
+/* =====================================================
+   DASHBOARD
+===================================================== */
 
+#dashboard-section {
+
+    margin-bottom: 32px;
+}
+
+
+.dashboard-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 12px;
+}
+
+
+.dashboard-card {
+
+    padding: 16px;
+
+    background: #f9fafb;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 14px;
+}
+
+
+.dashboard-card span {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+.dashboard-card strong {
+
+    display: block;
+
+    font-size: 22px;
+}
+
+
+.dashboard-card:last-child {
+
+    grid-column:
+        1 / -1;
+}
 
         /* =====================================================
            PEDIDOS
@@ -361,6 +419,88 @@ textarea {
             class="panel"
             style="display: none;"
         >
+        <!-- =================================================
+     DASHBOARD
+================================================== -->
+
+<section id="dashboard-section">
+
+    <h2>
+        Resumen del negocio
+    </h2>
+
+
+    <div class="dashboard-grid">
+
+
+        <article class="dashboard-card">
+
+            <span>
+                Pedidos recibidos
+            </span>
+
+            <strong id="dashboard-pedidos">
+                -
+            </strong>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <span>
+                Pendientes
+            </span>
+
+            <strong id="dashboard-pendientes">
+                -
+            </strong>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <span>
+                Completados
+            </span>
+
+            <strong id="dashboard-completados">
+                -
+            </strong>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <span>
+                Ventas completadas
+            </span>
+
+            <strong id="dashboard-ventas">
+                -
+            </strong>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <span>
+                Productos
+            </span>
+
+            <strong id="dashboard-productos">
+                -
+            </strong>
+
+        </article>
+
+
+    </div>
+
+</section>
 
 
             <!-- =================================================

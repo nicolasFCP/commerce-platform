@@ -2,28 +2,48 @@
 
 ## Estado actual
 
-Commerce Platform se encuentra en desarrollo y ya cuenta con un primer MVP técnico funcional conectado a Supabase.
+Commerce Platform se encuentra en desarrollo y ya cuenta con un MVP funcional publicado en Internet y conectado a Supabase.
 
-Actualmente existe una base de datos multi-comercio protegida con Row Level Security (RLS), autenticación administrativa mediante Supabase Auth, catálogo público y un flujo funcional de pedidos desde el navegador.
+Actualmente existe una arquitectura multi-comercio protegida mediante Row Level Security (RLS), autenticación administrativa mediante Supabase Auth, catálogo público, creación segura de pedidos y un panel administrativo para operar pedidos y productos.
 
-El sistema ya permite que un visitante:
+El sistema ya permite que un cliente:
 
-- consulte un comercio activo;
-- consulte sus categorías;
-- consulte sus productos disponibles;
-- agregue productos a un carrito;
+- consulte el catálogo de un comercio;
+- consulte categorías y productos disponibles;
+- agregue productos al carrito;
 - cambie cantidades;
 - ingrese sus datos;
 - realice un pedido;
 - y que el pedido quede registrado correctamente en Supabase.
 
-Los precios y totales definitivos son calculados y validados en la base de datos, no en el navegador.
+El comercio puede:
 
+- iniciar sesión en su panel administrativo;
+- consultar sus pedidos;
+- gestionar el ciclo operativo de cada pedido;
+- consultar sus productos;
+- crear productos;
+- cambiar precios;
+- y marcar productos como disponibles o agotados.
+
+Los precios y totales definitivos de los pedidos son calculados y validados en la base de datos, no en el navegador.
+
+El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin depender de un servidor local.
 ---
 
 ## Paso actual
 
-PASO 2.11 — Frontend público conectado a Supabase y pedidos reales funcionando.
+PASO 3.4 — Gestión de productos desde el panel administrativo funcionando.
+
+El comercio ya puede consultar, crear y administrar productos directamente desde su panel.
+
+Siguiente objetivo:
+
+PASO 3.5 — Dashboard y resumen operativo del negocio funcionando.
+
+Siguiente objetivo:
+
+PASO 3.6 — Reportes básicos de ventas.
 
 ---
 
@@ -328,3 +348,78 @@ Se verificó desde Internet:
 - funcionamiento de las acciones administrativas.
 
 El proyecto ya no depende de un servidor local para realizar demostraciones comerciales.
+
+---
+
+## 25. Gestión administrativa de productos
+
+Se amplió el panel administrativo para permitir que el comercio gestione su catálogo sin utilizar directamente Supabase.
+
+El panel permite:
+
+- consultar los productos pertenecientes al comercio;
+- visualizar nombre, precio, disponibilidad y estado;
+- cambiar el precio de un producto;
+- marcar un producto como disponible;
+- marcar un producto como agotado;
+- crear productos nuevos;
+- seleccionar la categoría del producto;
+- indicar nombre, precio y descripción.
+
+Se crearon las funciones seguras:
+
+- `public.set_product_availability()`;
+- `public.set_product_price()`;
+- `public.create_product()`.
+
+Estas funciones verifican que el usuario autenticado pertenezca al comercio correspondiente antes de realizar cambios.
+
+Se verificó correctamente que:
+
+- un producto marcado como agotado deja de aparecer en el catálogo público;
+- al volver a marcarlo disponible aparece nuevamente;
+- los cambios de precio se reflejan en el catálogo público;
+- los productos nuevos aparecen automáticamente en el catálogo;
+- los productos existentes continúan funcionando después de las modificaciones.
+
+Se creó desde el administrador el producto de prueba:
+
+`Agua 600ml`
+
+Categoría:
+
+`Bebidas`
+
+Precio:
+
+`$2.500`
+
+El producto apareció correctamente en el catálogo público junto con `Coca-Cola 1.5L`.
+
+La administración de productos fue verificada tanto localmente como desde la versión publicada en GitHub Pages.
+
+---
+
+## 26. Dashboard operativo del negocio
+
+Se creó una primera vista de resumen dentro del panel administrativo.
+
+El dashboard muestra información obtenida directamente desde Supabase:
+
+- cantidad total de pedidos;
+- pedidos pendientes;
+- pedidos completados;
+- valor acumulado de ventas completadas;
+- cantidad de productos registrados.
+
+Con los datos actuales de Mercado Demo se verificó:
+
+- 2 pedidos recibidos;
+- 1 pedido pendiente;
+- 1 pedido completado;
+- $19.500 en ventas completadas;
+- 2 productos registrados.
+
+Los cálculos se realizan desde el frontend utilizando únicamente información que el usuario autenticado puede consultar mediante RLS.
+
+Este dashboard constituye la base para futuros reportes y análisis del negocio.

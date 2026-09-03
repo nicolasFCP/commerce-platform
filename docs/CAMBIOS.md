@@ -225,3 +225,18 @@ Fecha: 2 de septiembre de 2026
 - Se creó `Agua 600ml` dentro de la categoría `Bebidas` con precio de $2.500.
 - Se verificó que el nuevo producto aparece automáticamente en el catálogo público.
 - Se verificó que los productos existentes continúan funcionando correctamente.
+
+## Versión 0.0.19
+
+Fecha: 3 de septiembre de 2026
+
+- Se creó el primer dashboard operativo del comercio.
+- Se agregó una sección `Resumen del negocio` al panel administrativo.
+- El dashboard consulta información real desde Supabase.
+- Se muestra la cantidad total de pedidos recibidos.
+- Se muestra la cantidad de pedidos pendientes.
+- Se muestra la cantidad de pedidos completados.
+- Se calcula el valor total de las ventas completadas.
+- Se muestra la cantidad de productos registrados.
+- Los datos del dashboard están protegidos mediante la sesión autenticada y las políticas RLS existentes.
+- Se verificó correctamente el dashboard con los datos actuales de Mercado Demo.

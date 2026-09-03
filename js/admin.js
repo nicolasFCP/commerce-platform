@@ -34,6 +34,30 @@ const listaProductos = document.querySelector(
 );
 
 // ======================================================
+// ELEMENTOS DEL DASHBOARD
+// ======================================================
+
+const dashboardPedidos = document.querySelector(
+    '#dashboard-pedidos'
+);
+
+const dashboardPendientes = document.querySelector(
+    '#dashboard-pendientes'
+);
+
+const dashboardCompletados = document.querySelector(
+    '#dashboard-completados'
+);
+
+const dashboardVentas = document.querySelector(
+    '#dashboard-ventas'
+);
+
+const dashboardProductos = document.querySelector(
+    '#dashboard-productos'
+);
+
+// ======================================================
 // ELEMENTOS DEL FORMULARIO DE PRODUCTOS
 // ======================================================
 
@@ -137,6 +161,112 @@ async function iniciarSesion(event) {
     await cargarProductos();
 
     await cargarCategorias();
+
+    await cargarDashboard();
+}
+
+// ======================================================
+// CARGAR DASHBOARD
+// ======================================================
+
+async function cargarDashboard() {
+
+    dashboardPedidos.textContent = '...';
+    dashboardPendientes.textContent = '...';
+    dashboardCompletados.textContent = '...';
+    dashboardVentas.textContent = '...';
+    dashboardProductos.textContent = '...';
+
+
+    const {
+        data: pedidos,
+        error: pedidosError
+    } = await supabase
+        .from('orders')
+        .select(`
+            status,
+            total
+        `);
+
+
+    if (pedidosError) {
+
+        console.error(
+            'Error cargando dashboard de pedidos:',
+            pedidosError
+        );
+
+        return;
+    }
+
+
+    const {
+        data: productos,
+        error: productosError
+    } = await supabase
+        .from('products')
+        .select(`
+            id
+        `);
+
+
+    if (productosError) {
+
+        console.error(
+            'Error cargando dashboard de productos:',
+            productosError
+        );
+
+        return;
+    }
+
+
+    const totalPedidos =
+        pedidos.length;
+
+
+    const pedidosPendientes =
+        pedidos.filter(
+            pedido =>
+                pedido.status === 'pending'
+        );
+
+
+    const pedidosCompletados =
+        pedidos.filter(
+            pedido =>
+                pedido.status === 'completed'
+        );
+
+
+    const ventasCompletadas =
+        pedidosCompletados.reduce(
+            (total, pedido) =>
+                total + Number(pedido.total),
+            0
+        );
+
+
+    dashboardPedidos.textContent =
+        totalPedidos;
+
+
+    dashboardPendientes.textContent =
+        pedidosPendientes.length;
+
+
+    dashboardCompletados.textContent =
+        pedidosCompletados.length;
+
+
+    dashboardVentas.textContent =
+        formatearPrecio(
+            ventasCompletadas
+        );
+
+
+    dashboardProductos.textContent =
+        productos.length;
 }
 
 
