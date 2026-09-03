@@ -51,7 +51,15 @@ PASO 3.7 — Análisis de productos y ventas funcionando.
 
 Siguiente objetivo:
 
-PASO 3.8 — Automatizaciones y comunicación con clientes.
+PASO 3.8 — Automatizaciones y comunicación con clientes en desarrollo.
+
+Completado:
+
+PASO 3.8.1 — Contacto directo por WhatsApp desde pedidos.
+
+Siguiente objetivo:
+
+PASO 3.8.2 — Preparar automáticamente el aviso al cliente después de cambiar el estado del pedido.
 ---
 
 # Completado
@@ -482,3 +490,36 @@ Con los datos actuales de Mercado Demo se verificó:
 - ingresos generados: $19.500.
 
 Esta información constituye una primera base para análisis comerciales y futuras funciones de inteligencia artificial.
+
+---
+
+## 29. Contacto automatizado por WhatsApp
+
+Se agregó una primera integración operativa con WhatsApp.
+
+Cada pedido del panel administrativo incluye la acción:
+
+`Contactar por WhatsApp`
+
+El sistema:
+
+- obtiene automáticamente el teléfono del cliente;
+- limpia caracteres innecesarios del número;
+- agrega el prefijo colombiano `57` cuando corresponde;
+- genera un mensaje según el estado actual del pedido;
+- incluye el nombre del cliente;
+- incluye el total del pedido;
+- abre WhatsApp con el destinatario correspondiente.
+
+Actualmente existen mensajes diferentes para los estados:
+
+- `pending`;
+- `accepted`;
+- `preparing`;
+- `ready`;
+- `out_for_delivery`;
+- `completed`.
+
+La integración actualmente prepara el contacto y el mensaje, pero el envío final continúa siendo realizado por el usuario desde WhatsApp.
+
+Esta función constituye la primera automatización de comunicación de Commerce Platform.

@@ -266,3 +266,16 @@ Fecha: 3 de septiembre de 2026
 - Se agrupan automáticamente las ventas de un mismo producto entre diferentes pedidos completados.
 - Se verificó correctamente que `Coca-Cola 1.5L` es actualmente el producto más vendido.
 - Se verificaron 3 unidades vendidas y $19.500 en ingresos para dicho producto.
+
+## Versión 0.0.22
+
+Fecha: 3 de septiembre de 2026
+
+- Se agregó contacto directo por WhatsApp desde los pedidos del panel administrativo.
+- Cada pedido muestra un botón `Contactar por WhatsApp`.
+- El sistema obtiene automáticamente el número telefónico registrado en el pedido.
+- Los números colombianos de 10 dígitos reciben automáticamente el prefijo internacional `57`.
+- Se implementó la generación automática de mensajes según el estado actual del pedido.
+- Los mensajes incluyen el nombre del cliente y el total del pedido.
+- Se verificó correctamente la apertura de WhatsApp desde el administrador.
+- La prueba utilizó un número ficticio, por lo que WhatsApp confirmó que dicho número no está registrado.

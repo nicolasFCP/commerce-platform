@@ -779,6 +779,92 @@ function crearBotonAccion(pedido) {
     `;
 }
 
+// ======================================================
+// MENSAJE AUTOMÁTICO DE WHATSAPP
+// ======================================================
+
+function crearMensajeWhatsApp(pedido) {
+
+    let mensajeEstado = 'Tenemos información sobre tu pedido.';
+
+
+    if (pedido.status === 'pending') {
+
+        mensajeEstado =
+            'Hemos recibido tu pedido y pronto será revisado.';
+
+    }
+
+
+    else if (pedido.status === 'accepted') {
+
+        mensajeEstado =
+            'Tu pedido fue aceptado.';
+
+    }
+
+
+    else if (pedido.status === 'preparing') {
+
+        mensajeEstado =
+            'Estamos preparando tu pedido.';
+
+    }
+
+
+    else if (pedido.status === 'ready') {
+
+        mensajeEstado =
+            'Tu pedido ya está listo.';
+
+    }
+
+
+    else if (
+        pedido.status === 'out_for_delivery'
+    ) {
+
+        mensajeEstado =
+            'Tu pedido ya salió a domicilio.';
+
+    }
+
+
+    else if (pedido.status === 'completed') {
+
+        mensajeEstado =
+            'Tu pedido fue entregado. Gracias por tu compra.';
+
+    }
+
+
+    return `
+Hola ${pedido.customer_name}.
+
+${mensajeEstado}
+
+Total: ${formatearPrecio(pedido.total)}
+    `.trim();
+}
+
+
+// ======================================================
+// BOTÓN DE WHATSAPP
+// ======================================================
+
+function crearBotonWhatsApp(pedido) {
+
+    return `
+        <button
+            class="contactar-whatsapp"
+            data-phone="${pedido.customer_phone}"
+            data-order-id="${pedido.id}"
+            style="margin-top: 10px;"
+        >
+            Contactar por WhatsApp
+        </button>
+    `;
+}
 
 // ======================================================
 // CARGAR PEDIDOS
@@ -828,6 +914,8 @@ async function cargarPedidos() {
         return;
     }
 
+    window.pedidosActuales =
+    pedidos;
 
     if (
         !pedidos ||
@@ -892,6 +980,8 @@ async function cargarPedidos() {
                     </div>
 
                     ${crearBotonAccion(pedido)}
+
+                    ${crearBotonWhatsApp(pedido)}
 
                 </article>
 
@@ -965,6 +1055,82 @@ listaPedidos.addEventListener(
 
 
         await cargarPedidos();
+    }
+);
+
+// ======================================================
+// CONTACTAR CLIENTE POR WHATSAPP
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    event => {
+
+        const botonWhatsApp =
+            event.target.closest(
+                '.contactar-whatsapp'
+            );
+
+
+        if (!botonWhatsApp) {
+
+            return;
+        }
+
+
+        const orderId =
+            botonWhatsApp.dataset.orderId;
+
+
+        const pedido =
+            window.pedidosActuales?.find(
+                pedido =>
+                    pedido.id === orderId
+            );
+
+
+        if (!pedido) {
+
+            alert(
+                'No se encontró la información del pedido.'
+            );
+
+            return;
+        }
+
+
+        let telefono =
+            pedido.customer_phone
+                .replace(/\D/g, '');
+
+
+        if (
+            telefono.length === 10
+            &&
+            telefono.startsWith('3')
+        ) {
+
+            telefono =
+                `57${telefono}`;
+        }
+
+
+        const mensaje =
+            crearMensajeWhatsApp(
+                pedido
+            );
+
+
+        const url =
+            `https://wa.me/${telefono}?text=${
+                encodeURIComponent(mensaje)
+            }`;
+
+
+        window.open(
+            url,
+            '_blank'
+        );
     }
 );
 
