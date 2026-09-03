@@ -43,7 +43,11 @@ PASO 3.5 — Dashboard y resumen operativo del negocio funcionando.
 
 Siguiente objetivo:
 
-PASO 3.6 — Reportes básicos de ventas.
+PASO 3.6 — Reportes básicos de ventas funcionando.
+
+Siguiente objetivo:
+
+PASO 3.7 — Análisis de productos y ventas.
 
 ---
 
@@ -423,3 +427,29 @@ Con los datos actuales de Mercado Demo se verificó:
 Los cálculos se realizan desde el frontend utilizando únicamente información que el usuario autenticado puede consultar mediante RLS.
 
 Este dashboard constituye la base para futuros reportes y análisis del negocio.
+
+---
+
+## 27. Reportes básicos de ventas
+
+Se agregó una sección de reportes al panel administrativo.
+
+Actualmente el comercio puede consultar:
+
+- pedidos creados durante el día actual;
+- ventas completadas durante el día actual;
+- ventas completadas durante los últimos 7 días;
+- ticket promedio de los pedidos completados.
+
+Los reportes se calculan utilizando información obtenida desde la tabla `orders`.
+
+Los pedidos que todavía no han sido completados no se contabilizan como ventas.
+
+Con los datos actuales de Mercado Demo se verificó:
+
+- 0 pedidos creados hoy;
+- $0 en ventas completadas hoy;
+- $19.500 en ventas durante los últimos 7 días;
+- $19.500 de ticket promedio.
+
+Los cálculos respetan el acceso multi-comercio existente mediante RLS.

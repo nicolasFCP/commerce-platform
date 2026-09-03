@@ -240,3 +240,15 @@ Fecha: 3 de septiembre de 2026
 - Se muestra la cantidad de productos registrados.
 - Los datos del dashboard están protegidos mediante la sesión autenticada y las políticas RLS existentes.
 - Se verificó correctamente el dashboard con los datos actuales de Mercado Demo.
+## Versión 0.0.20
+
+Fecha: 3 de septiembre de 2026
+
+- Se agregó una sección de reportes al panel administrativo.
+- Se implementó el cálculo de pedidos realizados durante el día actual.
+- Se implementó el cálculo de ventas completadas durante el día actual.
+- Se implementó el cálculo de ventas completadas durante los últimos 7 días.
+- Se implementó el cálculo del ticket promedio de los pedidos completados.
+- Los reportes utilizan información real de los pedidos almacenados en Supabase.
+- Solo los pedidos con estado `completed` se contabilizan como ventas.
+- Se verificó correctamente el funcionamiento de los reportes con los datos de Mercado Demo.

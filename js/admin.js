@@ -58,6 +58,26 @@ const dashboardProductos = document.querySelector(
 );
 
 // ======================================================
+// ELEMENTOS DE REPORTES
+// ======================================================
+
+const reportePedidosHoy = document.querySelector(
+    '#reporte-pedidos-hoy'
+);
+
+const reporteVentasHoy = document.querySelector(
+    '#reporte-ventas-hoy'
+);
+
+const reporteVentasSemana = document.querySelector(
+    '#reporte-ventas-semana'
+);
+
+const reporteTicketPromedio = document.querySelector(
+    '#reporte-ticket-promedio'
+);
+
+// ======================================================
 // ELEMENTOS DEL FORMULARIO DE PRODUCTOS
 // ======================================================
 
@@ -163,6 +183,8 @@ async function iniciarSesion(event) {
     await cargarCategorias();
 
     await cargarDashboard();
+
+    await cargarReportes();
 }
 
 // ======================================================
@@ -269,6 +291,193 @@ async function cargarDashboard() {
         productos.length;
 }
 
+// ======================================================
+// CARGAR REPORTES
+// ======================================================
+
+async function cargarReportes() {
+
+    reportePedidosHoy.textContent = '...';
+    reporteVentasHoy.textContent = '...';
+    reporteVentasSemana.textContent = '...';
+    reporteTicketPromedio.textContent = '...';
+
+
+    const {
+        data: pedidos,
+        error
+    } = await supabase
+        .from('orders')
+        .select(`
+            created_at,
+            status,
+            total
+        `);
+
+
+    if (error) {
+
+        console.error(
+            'Error cargando reportes:',
+            error
+        );
+
+        return;
+    }
+
+
+    // ==================================================
+    // FECHAS
+    // ==================================================
+
+    const ahora =
+        new Date();
+
+
+    const inicioHoy =
+        new Date(
+            ahora.getFullYear(),
+            ahora.getMonth(),
+            ahora.getDate()
+        );
+
+
+    const haceSieteDias =
+        new Date(ahora);
+
+    haceSieteDias.setDate(
+        haceSieteDias.getDate() - 7
+    );
+
+
+    // ==================================================
+    // PEDIDOS DE HOY
+    // ==================================================
+
+    const pedidosHoy =
+        pedidos.filter(
+            pedido => {
+
+                const fechaPedido =
+                    new Date(
+                        pedido.created_at
+                    );
+
+
+                return (
+                    fechaPedido >= inicioHoy
+                );
+            }
+        );
+
+
+    // ==================================================
+    // PEDIDOS COMPLETADOS
+    // ==================================================
+
+    const pedidosCompletados =
+        pedidos.filter(
+            pedido =>
+                pedido.status === 'completed'
+        );
+
+
+    // ==================================================
+    // VENTAS DE HOY
+    // ==================================================
+
+    const ventasHoy =
+        pedidosHoy
+            .filter(
+                pedido =>
+                    pedido.status === 'completed'
+            )
+            .reduce(
+                (total, pedido) =>
+                    total +
+                    Number(pedido.total),
+                0
+            );
+
+
+    // ==================================================
+    // VENTAS ÚLTIMOS 7 DÍAS
+    // ==================================================
+
+    const ventasSemana =
+        pedidosCompletados
+            .filter(
+                pedido => {
+
+                    const fechaPedido =
+                        new Date(
+                            pedido.created_at
+                        );
+
+
+                    return (
+                        fechaPedido >= haceSieteDias
+                    );
+                }
+            )
+            .reduce(
+                (total, pedido) =>
+                    total +
+                    Number(pedido.total),
+                0
+            );
+
+
+    // ==================================================
+    // TICKET PROMEDIO
+    // ==================================================
+
+    const totalVentasCompletadas =
+        pedidosCompletados.reduce(
+            (total, pedido) =>
+                total +
+                Number(pedido.total),
+            0
+        );
+
+
+    const ticketPromedio =
+        pedidosCompletados.length > 0
+
+            ? (
+                totalVentasCompletadas
+                /
+                pedidosCompletados.length
+            )
+
+            : 0;
+
+
+    // ==================================================
+    // MOSTRAR RESULTADOS
+    // ==================================================
+
+    reportePedidosHoy.textContent =
+        pedidosHoy.length;
+
+
+    reporteVentasHoy.textContent =
+        formatearPrecio(
+            ventasHoy
+        );
+
+
+    reporteVentasSemana.textContent =
+        formatearPrecio(
+            ventasSemana
+        );
+
+
+    reporteTicketPromedio.textContent =
+        formatearPrecio(
+            ticketPromedio
+        );
+}
 
 // ======================================================
 // BOTÓN SEGÚN EL ESTADO DEL PEDIDO
