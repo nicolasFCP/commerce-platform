@@ -33,7 +33,37 @@ const listaProductos = document.querySelector(
     '#lista-productos'
 );
 
+// ======================================================
+// ELEMENTOS DEL FORMULARIO DE PRODUCTOS
+// ======================================================
 
+const productoForm = document.querySelector(
+    '#producto-form'
+);
+
+const productoNombre = document.querySelector(
+    '#producto-nombre'
+);
+
+const productoCategoria = document.querySelector(
+    '#producto-categoria'
+);
+
+const productoPrecio = document.querySelector(
+    '#producto-precio'
+);
+
+const productoDescripcion = document.querySelector(
+    '#producto-descripcion'
+);
+
+const crearProductoButton = document.querySelector(
+    '#crear-producto-button'
+);
+
+const productoMensaje = document.querySelector(
+    '#producto-mensaje'
+);
 // ======================================================
 // LOGIN
 // ======================================================
@@ -41,6 +71,11 @@ const listaProductos = document.querySelector(
 formulario.addEventListener(
     'submit',
     iniciarSesion
+);
+
+productoForm.addEventListener(
+    'submit',
+    crearProducto
 );
 
 
@@ -100,6 +135,8 @@ async function iniciarSesion(event) {
     await cargarPedidos();
 
     await cargarProductos();
+
+    await cargarCategorias();
 }
 
 
@@ -378,6 +415,198 @@ listaPedidos.addEventListener(
     }
 );
 
+// ======================================================
+// CARGAR CATEGORÍAS
+// ======================================================
+
+async function cargarCategorias() {
+
+    if (!productoCategoria) {
+
+        return;
+    }
+
+
+    productoCategoria.innerHTML = `
+        <option value="">
+            Selecciona una categoría
+        </option>
+    `;
+
+
+    const {
+        data: categorias,
+        error
+    } = await supabase
+        .from('categories')
+        .select(`
+            id,
+            name
+        `)
+        .eq(
+            'active',
+            true
+        )
+        .order(
+            'name',
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            'Error cargando categorías:',
+            error
+        );
+
+        return;
+    }
+
+
+    categorias.forEach(
+        categoria => {
+
+            const opcion =
+                document.createElement('option');
+
+
+            opcion.value =
+                categoria.id;
+
+
+            opcion.textContent =
+                categoria.name;
+
+
+            productoCategoria.appendChild(
+                opcion
+            );
+        }
+    );
+}
+
+// ======================================================
+// CREAR PRODUCTO
+// ======================================================
+
+async function crearProducto(event) {
+
+    event.preventDefault();
+
+
+    const nombre =
+        productoNombre.value.trim();
+
+    const categoryId =
+        productoCategoria.value;
+
+    const precio =
+        Number(productoPrecio.value);
+
+    const descripcion =
+        productoDescripcion.value.trim();
+
+
+    productoMensaje.textContent = '';
+
+
+    if (!nombre) {
+
+        productoMensaje.textContent =
+            'Escribe el nombre del producto.';
+
+        return;
+    }
+
+
+    if (!categoryId) {
+
+        productoMensaje.textContent =
+            'Selecciona una categoría.';
+
+        return;
+    }
+
+
+    if (
+        !Number.isFinite(precio)
+        ||
+        precio < 0
+    ) {
+
+        productoMensaje.textContent =
+            'Ingresa un precio válido.';
+
+        return;
+    }
+
+
+    crearProductoButton.disabled = true;
+
+    crearProductoButton.textContent =
+        'Creando producto...';
+
+
+    const {
+        data,
+        error
+    } = await supabase.rpc(
+        'create_product',
+        {
+            p_category_id: categoryId,
+            p_name: nombre,
+            p_price: precio,
+            p_description:
+                descripcion || null
+        }
+    );
+
+
+    if (error) {
+
+        console.error(
+            'Error creando producto:',
+            error
+        );
+
+
+        productoMensaje.textContent =
+            'No se pudo crear el producto.';
+
+
+        crearProductoButton.disabled = false;
+
+        crearProductoButton.textContent =
+            'Crear producto';
+
+        return;
+    }
+
+
+    console.log(
+        'Producto creado:',
+        data
+    );
+
+
+    productoMensaje.textContent =
+        'Producto creado correctamente ✅';
+
+
+    productoForm.reset();
+
+
+    await cargarProductos();
+
+
+    crearProductoButton.disabled = false;
+
+    crearProductoButton.textContent =
+        'Crear producto';
+}
 
 // ======================================================
 // CARGAR PRODUCTOS

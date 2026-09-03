@@ -209,3 +209,19 @@ Fecha: 2 de septiembre de 2026
 - Se agregó al panel administrativo el formulario visual inicial para crear productos.
 - El formulario incluye nombre, categoría, precio y descripción.
 - La creación de productos desde el frontend todavía está pendiente de conectar con JavaScript.
+
+## Versión 0.0.18
+
+Fecha: 2 de septiembre de 2026
+
+- Se conectó el formulario de creación de productos con Supabase.
+- Se implementó la carga dinámica de categorías disponibles en el panel administrativo.
+- Las categorías del comercio son consultadas desde la tabla `categories`.
+- Se conectó el formulario con `public.create_product()`.
+- El comercio puede crear productos indicando nombre, categoría, precio y descripción.
+- La creación de productos valida permisos mediante la pertenencia del usuario al comercio.
+- Los productos nuevos se crean activos y disponibles por defecto.
+- Se realizó la primera creación real de un producto desde el panel administrativo.
+- Se creó `Agua 600ml` dentro de la categoría `Bebidas` con precio de $2.500.
+- Se verificó que el nuevo producto aparece automáticamente en el catálogo público.
+- Se verificó que los productos existentes continúan funcionando correctamente.
