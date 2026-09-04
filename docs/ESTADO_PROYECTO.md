@@ -786,3 +786,48 @@ La función obtiene automáticamente el comercio del usuario autenticado mediant
 Se verificó que los cambios realizados desde el panel quedan almacenados y vuelven a cargarse correctamente después de recargar la aplicación.
 
 Esta configuración será utilizada posteriormente para generar las instrucciones de pago enviadas al cliente.
+
+---
+
+## 35. Flujo completo de transferencia y mensajes de WhatsApp
+
+El flujo de pagos por transferencia se encuentra funcionalmente integrado con el panel administrativo.
+
+Cuando un pedido es aceptado y tiene:
+
+`payment_method = transfer`
+
+y:
+
+`payment_status = pending`
+
+el mensaje de WhatsApp incluye automáticamente el total definitivo y la configuración bancaria del comercio.
+
+La información se obtiene desde `store_payment_settings`.
+
+Cuando el comprobante se registra:
+
+`pending -> proof_received`
+
+se genera un mensaje informando al cliente que el comprobante fue recibido y está siendo verificado.
+
+Cuando el comercio confirma que el dinero realmente ingresó:
+
+`proof_received -> paid`
+
+se registra la confirmación del pago y el mensaje de WhatsApp informa al cliente que el pago fue validado.
+
+Para pedidos por transferencia, el panel no muestra la acción "Empezar preparación" mientras el pago no esté confirmado.
+
+Solo cuando:
+
+`payment_status = paid`
+
+se habilita la preparación del pedido.
+
+El backend también mantiene esta restricción independientemente del frontend.
+
+Actualmente los mensajes se generan automáticamente, pero el envío continúa siendo manual mediante el botón "Contactar por WhatsApp".
+
+El siguiente objetivo posterior será conectar estos mismos eventos con WhatsApp Cloud API para realizar los envíos automáticamente.
+

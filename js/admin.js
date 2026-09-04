@@ -127,6 +127,8 @@ const productoMensaje = document.querySelector(
 
 let productosParaReemplazo = [];
 
+let paymentSettingsActual = null;
+
 const transferEnabled = document.querySelector(
     '#transfer-enabled'
 );
@@ -917,12 +919,22 @@ function crearBotonAccion(pedido) {
     }
 
 
-    else if (pedido.status === 'accepted') {
+   else if (pedido.status === 'accepted') {
 
-        siguienteEstado = 'preparing';
-        texto = 'Empezar preparación';
+    if (
+        pedido.payment_method === 'transfer'
+        &&
+        pedido.payment_status !== 'paid'
+    ) {
 
+        return '';
     }
+
+
+    siguienteEstado = 'preparing';
+    texto = 'Empezar preparación';
+
+}
 
 
     else if (pedido.status === 'preparing') {
@@ -991,7 +1003,124 @@ function crearBotonAccion(pedido) {
 
 function crearMensajeWhatsApp(pedido) {
 
-    let mensajeEstado = 'Tenemos información sobre tu pedido.';
+    // ==================================================
+    // TRANSFERENCIA PENDIENTE
+    // ==================================================
+
+    if (
+        pedido.status === 'accepted'
+        &&
+        pedido.payment_method === 'transfer'
+        &&
+        pedido.payment_status === 'pending'
+    ) {
+
+        if (
+            paymentSettingsActual
+            &&
+            paymentSettingsActual.transfer_enabled === true
+        ) {
+
+            const tipoCuenta =
+                paymentSettingsActual.account_type === 'savings'
+                    ? 'Ahorros'
+                    : paymentSettingsActual.account_type === 'checking'
+                        ? 'Corriente'
+                        : 'Otro';
+
+
+            return `
+Hola ${pedido.customer_name}.
+
+Tu pedido fue confirmado ✅
+
+Total a pagar:
+${formatearPrecio(pedido.total)}
+
+Datos para la transferencia:
+
+Banco o medio de pago:
+${paymentSettingsActual.bank_name ?? ''}
+
+Tipo de cuenta:
+${tipoCuenta}
+
+Número:
+${paymentSettingsActual.account_number ?? ''}
+
+Titular:
+${paymentSettingsActual.account_holder ?? ''}
+
+${paymentSettingsActual.transfer_instructions ?? 'Envía el comprobante después de realizar la transferencia.'}
+            `.trim();
+        }
+
+
+        return `
+Hola ${pedido.customer_name}.
+
+Tu pedido fue confirmado ✅
+
+Total a pagar:
+${formatearPrecio(pedido.total)}
+
+Nos pondremos en contacto contigo para indicarte los datos de transferencia.
+        `.trim();
+    }
+
+
+    // ==================================================
+    // COMPROBANTE RECIBIDO
+    // ==================================================
+
+    if (
+        pedido.payment_method === 'transfer'
+        &&
+        pedido.payment_status === 'proof_received'
+    ) {
+
+        return `
+Hola ${pedido.customer_name}.
+
+Recibimos tu comprobante de pago ✅
+
+Estamos verificando la transferencia de tu pedido por:
+
+${formatearPrecio(pedido.total)}
+
+Te confirmaremos cuando el pago haya sido validado.
+        `.trim();
+    }
+
+
+    // ==================================================
+    // PAGO CONFIRMADO
+    // ==================================================
+
+    if (
+        pedido.payment_method === 'transfer'
+        &&
+        pedido.payment_status === 'paid'
+        &&
+        pedido.status === 'accepted'
+    ) {
+
+        return `
+Hola ${pedido.customer_name}.
+
+Tu pago por ${formatearPrecio(pedido.total)} fue confirmado ✅
+
+Ahora comenzaremos con la preparación de tu pedido.
+        `.trim();
+    }
+
+
+    // ==================================================
+    // MENSAJES GENERALES SEGÚN ESTADO
+    // ==================================================
+
+    let mensajeEstado =
+        'Tenemos información sobre tu pedido.';
 
 
     if (pedido.status === 'pending') {
@@ -1877,6 +2006,7 @@ listaPedidos.addEventListener(
                 pedido
             );
 
+           
 
         const url =
             `https://wa.me/${telefono}?text=${
@@ -2127,6 +2257,8 @@ async function cargarPaymentSettings() {
 
         return;
     }
+
+    paymentSettingsActual = data;
 
 
     transferEnabled.checked =

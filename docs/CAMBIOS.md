@@ -378,3 +378,26 @@ Fecha: 4 de septiembre de 2026
 - El panel administrativo permite cargar y modificar la configuración de transferencias.
 - Se verificó la persistencia de la configuración después de recargar el panel.
 - Se dejó preparada la información necesaria para generar posteriormente mensajes automáticos de cobro por WhatsApp.
+
+## Versión 0.0.28
+
+Fecha: 4 de septiembre de 2026
+
+- Se integró la configuración bancaria del comercio con los mensajes de WhatsApp.
+- Los pedidos aceptados con transferencia pendiente generan un mensaje con:
+  - total definitivo del pedido;
+  - banco o medio de pago;
+  - tipo de cuenta;
+  - número de cuenta;
+  - titular;
+  - instrucciones del comercio.
+- Se agregó un mensaje específico cuando el comprobante fue recibido y está pendiente de verificación.
+- Se agregó un mensaje específico cuando el pago fue confirmado.
+- El botón "Empezar preparación" ya no aparece en pedidos por transferencia mientras el pago no esté confirmado.
+- La preparación vuelve a habilitarse únicamente cuando `payment_status = paid`.
+- Se verificaron correctamente los estados:
+  - `pending`;
+  - `proof_received`;
+  - `paid`.
+- El backend continúa protegiendo la transición hacia preparación aunque el frontend sea manipulado.
+- El flujo de transferencia queda preparado para su futura automatización mediante WhatsApp Cloud API.
