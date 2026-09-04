@@ -692,3 +692,68 @@ Resultado:
 - tienda aceptó correctamente el pedido.
 
 El pedido permanece protegido por las reglas de pago antes de iniciar preparación.
+
+---
+
+## 33. Flujo de pagos por transferencia
+
+La plataforma cuenta con un primer flujo seguro de pagos por transferencia.
+
+Estados utilizados:
+
+- `pending`
+- `proof_received`
+- `paid`
+- `rejected`
+
+Flujo verificado:
+
+`pending → proof_received → paid`
+
+Se creó:
+
+`public.register_payment_proof()`
+
+Esta función registra que el comercio recibió un comprobante de transferencia.
+
+Se creó:
+
+`public.confirm_order_payment()`
+
+Esta función:
+
+- valida que el usuario pertenezca al comercio;
+- valida que el método de pago sea transferencia;
+- exige que el pedido esté aceptado;
+- exige que exista un comprobante recibido;
+- evita confirmar dos veces el mismo pago;
+- cambia `payment_status` a `paid`;
+- registra `paid_at`;
+- registra `payment_verified_by`.
+
+La preparación de pedidos por transferencia está protegida.
+
+Un pedido con:
+
+`payment_method = transfer`
+
+no puede pasar:
+
+`accepted → preparing`
+
+mientras:
+
+`payment_status != paid`
+
+Se verificó correctamente el flujo:
+
+`accepted + transfer + pending`
+→ comprobante recibido
+→ `proof_received`
+→ pago verificado
+→ `paid`
+→ `preparing`
+
+Actualmente la recepción del comprobante se registra manualmente desde el panel.
+
+La columna `payment_proof_url` ya existe y queda preparada para almacenar posteriormente el comprobante real recibido desde la plataforma o mediante integración con WhatsApp.

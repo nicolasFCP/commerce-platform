@@ -341,3 +341,25 @@ Fecha: 4 de septiembre de 2026
 - Se verificó un reemplazo real de Coca-Cola 1.5L por Agua 600ml.
 - El total del pedido cambió correctamente de $6.500 a $2.500.
 - Se verificó que la relación entre el producto original y su reemplazo queda conservada en Supabase.
+
+## Versión 0.0.26
+
+Fecha: 4 de septiembre de 2026
+
+- Se completó el primer flujo operativo de pagos por transferencia.
+- Se creó `public.register_payment_proof()`.
+- Un pedido por transferencia puede registrar la recepción de un comprobante.
+- El estado de pago puede pasar de `pending` a `proof_received`.
+- Se creó `public.confirm_order_payment()`.
+- La confirmación de pago requiere que exista previamente un comprobante recibido.
+- La confirmación solo puede ser realizada por un usuario autorizado del comercio.
+- Al confirmar un pago se registra `payment_status = paid`.
+- Se registra automáticamente la fecha del pago mediante `paid_at`.
+- Se registra el usuario que verificó el pago mediante `payment_verified_by`.
+- El panel administrativo muestra acciones según el estado del pago.
+- Los pedidos con transferencia pendiente muestran `Registrar comprobante recibido`.
+- Los pedidos con comprobante recibido muestran `Confirmar pago`.
+- Los pedidos pagados muestran `Pago confirmado`.
+- Se verificó que una transferencia sin pago confirmado no puede iniciar preparación.
+- Se verificó que después de confirmar el pago el pedido puede pasar de `accepted` a `preparing`.
+- La estructura queda preparada para integrar posteriormente la recepción automática de comprobantes mediante WhatsApp.

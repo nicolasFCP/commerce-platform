@@ -784,6 +784,64 @@ function crearSelectorReemplazo(
 }
 
 // ======================================================
+// ACCIONES DE PAGO
+// ======================================================
+
+function crearAccionPago(pedido) {
+
+    if (
+        pedido.status !== 'accepted'
+        ||
+        pedido.payment_method !== 'transfer'
+    ) {
+
+        return '';
+    }
+
+
+    if (pedido.payment_status === 'pending') {
+
+        return `
+            <button
+                class="registrar-comprobante-pago"
+                data-order-id="${pedido.id}"
+            >
+                Registrar comprobante recibido
+            </button>
+        `;
+    }
+
+
+    if (
+        pedido.payment_status ===
+            'proof_received'
+    ) {
+
+        return `
+            <button
+                class="confirmar-pago-pedido"
+                data-order-id="${pedido.id}"
+            >
+                Confirmar pago
+            </button>
+        `;
+    }
+
+
+    if (pedido.payment_status === 'paid') {
+
+        return `
+            <div class="pago-confirmado">
+                ✅ Pago confirmado
+            </div>
+        `;
+    }
+
+
+    return '';
+}
+
+// ======================================================
 // BOTÓN SEGÚN EL ESTADO DEL PEDIDO
 // ======================================================
 
@@ -1250,6 +1308,8 @@ ${crearSelectorReemplazo(
 
                     </div>
 
+                    ${crearAccionPago(pedido)}
+                    
                     ${crearBotonAccion(pedido)}
 
                     ${crearBotonWhatsApp(pedido)}
@@ -1564,6 +1624,158 @@ listaPedidos.addEventListener(
 
     }
 );
+
+// ======================================================
+// REGISTRAR COMPROBANTE RECIBIDO
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.registrar-comprobante-pago'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const orderId =
+            boton.dataset.orderId;
+
+
+        const confirmar =
+            window.confirm(
+                '¿Confirmas que recibiste el comprobante de transferencia del cliente?'
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Registrando...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'register_payment_proof',
+            {
+                p_order_id: orderId,
+                p_payment_proof_url: null
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error registrando comprobante:',
+                error
+            );
+
+            alert(
+                'No se pudo registrar el comprobante.'
+            );
+
+            boton.disabled = false;
+
+            boton.textContent =
+                'Registrar comprobante recibido';
+
+            return;
+        }
+
+
+        await cargarPedidos();
+
+    }
+);
+
+// ======================================================
+// CONFIRMAR PAGO
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.confirmar-pago-pedido'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const orderId =
+            boton.dataset.orderId;
+
+
+        const confirmar =
+            window.confirm(
+                '¿Verificaste que el dinero realmente ingresó a la cuenta del comercio?'
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Confirmando pago...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'confirm_order_payment',
+            {
+                p_order_id: orderId
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error confirmando pago:',
+                error
+            );
+
+            alert(
+                'No se pudo confirmar el pago.'
+            );
+
+            boton.disabled = false;
+
+            boton.textContent =
+                'Confirmar pago';
+
+            return;
+        }
+
+
+        await cargarPedidos();
+
+    }
+);
+
 
 // ======================================================
 // CONTACTAR CLIENTE POR WHATSAPP
