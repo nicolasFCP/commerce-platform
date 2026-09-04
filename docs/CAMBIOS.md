@@ -319,3 +319,25 @@ Fecha: 3 de septiembre de 2026
 - Después de la aprobación, el pedido puede ser aceptado por la tienda.
 - Se verificó el flujo completo de quitar un producto, recalcular el total, obtener aprobación del cliente y aceptar el pedido.
 - Se verificó un cambio real de total de $9.000 a $6.500 conservando el producto eliminado en el historial.
+
+## Versión 0.0.25
+
+Fecha: 4 de septiembre de 2026
+
+- Se creó `public.replace_order_item()`.
+- La tienda puede reemplazar un producto no disponible por otro producto activo y disponible del mismo comercio.
+- El producto original se conserva en el historial con estado `replaced`.
+- Se registra el motivo del reemplazo y la fecha del cambio.
+- El nuevo producto se crea como un elemento activo del pedido.
+- Se relaciona el nuevo producto con el elemento original mediante `replacement_for_item_id`.
+- Se impide reemplazar un producto por sí mismo.
+- Se impide utilizar como reemplazo productos inactivos, agotados o pertenecientes a otro comercio.
+- Se recalculan automáticamente subtotal y total después del reemplazo.
+- Todo reemplazo cambia el pedido a `changes_pending_customer`.
+- El panel administrativo permite seleccionar un producto de reemplazo entre los productos disponibles del comercio.
+- Se excluye del selector el mismo producto solicitado originalmente.
+- El panel identifica visualmente los productos reemplazados.
+- Se verificó el flujo completo de reemplazo, aprobación del cliente y aceptación posterior del pedido.
+- Se verificó un reemplazo real de Coca-Cola 1.5L por Agua 600ml.
+- El total del pedido cambió correctamente de $6.500 a $2.500.
+- Se verificó que la relación entre el producto original y su reemplazo queda conservada en Supabase.

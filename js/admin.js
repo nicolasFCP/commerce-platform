@@ -124,6 +124,9 @@ const crearProductoButton = document.querySelector(
 const productoMensaje = document.querySelector(
     '#producto-mensaje'
 );
+
+let productosParaReemplazo = [];
+
 // ======================================================
 // LOGIN
 // ======================================================
@@ -192,17 +195,17 @@ async function iniciarSesion(event) {
     pedidosPanel.style.display = 'block';
 
 
-    await cargarPedidos();
-
     await cargarProductos();
 
-    await cargarCategorias();
+await cargarPedidos();
 
-    await cargarDashboard();
+await cargarCategorias();
 
-    await cargarReportes();
+await cargarDashboard();
 
-    await cargarAnalisisProductos();
+await cargarReportes();
+
+await cargarAnalisisProductos();
 }
 
 // ======================================================
@@ -694,6 +697,93 @@ async function cargarAnalisisProductos() {
 }
 
 // ======================================================
+// SELECTOR PARA REEMPLAZAR PRODUCTO DEL PEDIDO
+// ======================================================
+
+function crearSelectorReemplazo(
+    pedido,
+    item
+) {
+
+    if (
+        item.item_status !== 'active'
+        ||
+        !['pending', 'accepted']
+            .includes(pedido.status)
+        ||
+        ![
+            'pending_review',
+            'changes_pending_customer'
+        ].includes(
+            pedido.review_status
+        )
+    ) {
+
+        return '';
+    }
+
+
+    const opciones =
+        productosParaReemplazo.filter(
+            producto =>
+                producto.id !== item.product_id
+        );
+
+
+    if (opciones.length === 0) {
+
+        return '';
+    }
+
+
+    return `
+        <div class="reemplazo-producto">
+
+            <label>
+                Reemplazar por
+
+                <select
+                    class="selector-reemplazo"
+                    data-order-item-id="${item.id}"
+                >
+
+                    <option value="">
+                        Selecciona un producto
+                    </option>
+
+                    ${
+                        opciones.map(
+                            producto => `
+                                <option
+                                    value="${producto.id}"
+                                >
+                                    ${producto.name}
+                                    —
+                                    ${formatearPrecio(
+                                        producto.price
+                                    )}
+                                </option>
+                            `
+                        ).join('')
+                    }
+
+                </select>
+
+            </label>
+
+
+            <button
+                class="reemplazar-producto-pedido"
+                data-order-item-id="${item.id}"
+            >
+                Reemplazar producto
+            </button>
+
+        </div>
+    `;
+}
+
+// ======================================================
 // BOTÓN SEGÚN EL ESTADO DEL PEDIDO
 // ======================================================
 
@@ -921,6 +1011,7 @@ review_status,
 
     order_items (
     id,
+    product_id,
     product_name,
     quantity,
     unit_price,
@@ -1023,19 +1114,33 @@ review_status,
             </span>
 
             ${
-                item.item_status === 'removed'
-                    ? `
-                        <div class="producto-quitado">
-                            Quitado del pedido
-                            ${
-                                item.change_reason
-                                    ? `— ${item.change_reason}`
-                                    : ''
-                            }
-                        </div>
-                    `
-                    : ''
-            }
+    item.item_status === 'removed'
+        ? `
+            <div class="producto-quitado">
+                Quitado del pedido
+                ${
+                    item.change_reason
+                        ? `— ${item.change_reason}`
+                        : ''
+                }
+            </div>
+        `
+
+        : item.item_status === 'replaced'
+
+            ? `
+                <div class="producto-quitado">
+                    Reemplazado
+                    ${
+                        item.change_reason
+                            ? `— ${item.change_reason}`
+                            : ''
+                    }
+                </div>
+            `
+
+            : ''
+}
 
         </div>
 
@@ -1079,6 +1184,11 @@ review_status,
                     : ''
             }
 
+${crearSelectorReemplazo(
+    pedido,
+    item
+)}
+            
         </div>
 
     </div>
@@ -1313,6 +1423,135 @@ listaPedidos.addEventListener(
 
 
             boton.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        await cargarPedidos();
+
+    }
+);
+
+// ======================================================
+// REEMPLAZAR PRODUCTO DEL PEDIDO
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.reemplazar-producto-pedido'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const contenedor =
+            boton.closest(
+                '.reemplazo-producto'
+            );
+
+
+        const selector =
+            contenedor.querySelector(
+                '.selector-reemplazo'
+            );
+
+
+        const orderItemId =
+            boton.dataset.orderItemId;
+
+
+        const replacementProductId =
+            selector.value;
+
+
+        if (!replacementProductId) {
+
+            alert(
+                'Selecciona primero el producto de reemplazo.'
+            );
+
+            return;
+        }
+
+
+        const productoSeleccionado =
+            productosParaReemplazo.find(
+                producto =>
+                    producto.id ===
+                    replacementProductId
+            );
+
+
+        const confirmar =
+            window.confirm(
+                `¿Deseas reemplazar este producto por ${
+                    productoSeleccionado?.name
+                    ?? 'el producto seleccionado'
+                }?`
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        const textoOriginal =
+            boton.textContent;
+
+
+        boton.disabled = true;
+
+        selector.disabled = true;
+
+        boton.textContent =
+            'Reemplazando...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'replace_order_item',
+            {
+                p_order_item_id:
+                    orderItemId,
+
+                p_replacement_product_id:
+                    replacementProductId,
+
+                p_reason:
+                    'Producto no disponible'
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error reemplazando producto:',
+                error
+            );
+
+
+            alert(
+                'No se pudo reemplazar el producto.'
+            );
+
+
+            boton.disabled = false;
+
+            selector.disabled = false;
 
             boton.textContent =
                 textoOriginal;
@@ -1650,6 +1889,13 @@ async function cargarProductos() {
         return;
     }
 
+    productosParaReemplazo =
+    (productos ?? []).filter(
+        producto =>
+            producto.active === true
+            &&
+            producto.available === true
+    );
 
     if (
         !productos ||

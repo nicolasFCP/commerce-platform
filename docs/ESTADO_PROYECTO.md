@@ -643,3 +643,52 @@ Siguiente objetivo:
 - conservar relación entre producto original y reemplazo;
 - recalcular diferencias de precio;
 - solicitar nuevamente aprobación del cliente cuando sea necesario.
+
+---
+
+## 32. Reemplazo de productos
+
+La plataforma permite reemplazar un producto de un pedido antes de iniciar su preparación.
+
+Se creó:
+
+`public.replace_order_item()`
+
+El reemplazo conserva el historial del pedido.
+
+El producto original:
+
+- permanece registrado;
+- cambia a `item_status = replaced`;
+- conserva nombre, cantidad y precio originales;
+- registra el motivo del cambio;
+- registra fecha y usuario responsable.
+
+El nuevo producto:
+
+- se agrega como un nuevo `order_item`;
+- queda con `item_status = active`;
+- conserva su precio actual de base de datos;
+- mantiene la misma cantidad del producto reemplazado;
+- referencia al producto original mediante `replacement_for_item_id`.
+
+Después de un reemplazo:
+
+- se recalculan subtotal y total;
+- el pedido pasa a `changes_pending_customer`;
+- la tienda no puede aceptar el pedido hasta registrar la aprobación del cliente.
+
+Se verificó el flujo:
+
+`Coca-Cola 1.5L ($6.500) → Agua 600ml ($2.500)`
+
+Resultado:
+
+- Coca-Cola conservada como `replaced`;
+- Agua agregada como `active`;
+- total actualizado de $6.500 a $2.500;
+- cliente aprobó el cambio;
+- pedido volvió a estar habilitado para aceptación;
+- tienda aceptó correctamente el pedido.
+
+El pedido permanece protegido por las reglas de pago antes de iniciar preparación.
