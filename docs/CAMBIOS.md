@@ -297,3 +297,25 @@ Fecha: 3 de septiembre de 2026
 - Se agregó una protección para impedir que un pedido pagado por transferencia pase de `accepted` a `preparing` mientras el pago no esté confirmado.
 - Se verificó correctamente el bloqueo desde el navegador.
 - Se agregó un mensaje comprensible para informar al comercio cuando debe confirmar el pago antes de preparar.
+
+## Versión 0.0.24
+
+Fecha: 3 de septiembre de 2026
+
+- Se agregó una estructura de revisión para los pedidos mediante `review_status`.
+- Se agregaron estados individuales para los productos del pedido mediante `item_status`.
+- Los productos pueden conservarse como `active`, `removed` o `replaced`.
+- Se agregó información de auditoría para modificaciones de productos.
+- Se creó `public.remove_order_item()`.
+- La tienda puede quitar productos no disponibles sin borrar el historial original.
+- Los totales del pedido se recalculan automáticamente usando únicamente los productos activos.
+- Cuando un pedido es modificado, pasa a `changes_pending_customer`.
+- Se impide eliminar el último producto activo del pedido.
+- Se impide modificar productos una vez iniciada la preparación.
+- El panel administrativo muestra productos quitados y el motivo del cambio.
+- Se agregó protección para impedir aceptar un pedido mientras existan cambios pendientes de aprobación por el cliente.
+- Se creó `public.confirm_order_changes()`.
+- Se agregó una acción administrativa para registrar la aprobación del cliente.
+- Después de la aprobación, el pedido puede ser aceptado por la tienda.
+- Se verificó el flujo completo de quitar un producto, recalcular el total, obtener aprobación del cliente y aceptar el pedido.
+- Se verificó un cambio real de total de $9.000 a $6.500 conservando el producto eliminado en el historial.

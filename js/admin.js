@@ -699,6 +699,26 @@ async function cargarAnalisisProductos() {
 
 function crearBotonAccion(pedido) {
 
+    if (
+    pedido.status === 'pending'
+    &&
+    pedido.review_status ===
+        'changes_pending_customer'
+) {
+
+    return `
+        <div class="esperando-aprobacion">
+            ⏳ Esperando aprobación del cliente
+        </div>
+
+        <button
+            class="confirmar-cambios-cliente"
+            data-order-id="${pedido.id}"
+        >
+            Registrar aprobación del cliente
+        </button>
+    `;
+}
     let siguienteEstado = null;
     let texto = null;
 
@@ -897,13 +917,19 @@ async function cargarPedidos() {
     total,
     payment_method,
 payment_status,
+review_status,
 
     order_items (
-        product_name,
-        quantity,
-        unit_price,
-        line_total
-    )
+    id,
+    product_name,
+    quantity,
+    unit_price,
+    line_total,
+    item_status,
+    change_reason,
+    changed_at,
+    replacement_for_item_id
+)
 `)
         .order(
             'created_at',
@@ -986,23 +1012,78 @@ payment_status,
 
             ? pedido.order_items.map(item => `
 
-                <div class="pedido-producto-item">
+    <div class="pedido-producto-item">
 
-                    <span>
-                        ${item.quantity}
-                        ×
-                        ${item.product_name}
-                    </span>
+        <div>
 
-                    <span>
-                        ${formatearPrecio(
-                            item.line_total
-                        )}
-                    </span>
+            <span>
+                ${item.quantity}
+                ×
+                ${item.product_name}
+            </span>
 
-                </div>
+            ${
+                item.item_status === 'removed'
+                    ? `
+                        <div class="producto-quitado">
+                            Quitado del pedido
+                            ${
+                                item.change_reason
+                                    ? `— ${item.change_reason}`
+                                    : ''
+                            }
+                        </div>
+                    `
+                    : ''
+            }
 
-            `).join('')
+        </div>
+
+
+        <div class="pedido-producto-acciones">
+
+            <span>
+                ${formatearPrecio(
+                    item.line_total
+                )}
+            </span>
+
+
+            ${
+                item.item_status === 'active'
+
+                && ['pending', 'accepted']
+                    .includes(pedido.status)
+
+                && [
+                    'pending_review',
+                    'changes_pending_customer'
+                ].includes(
+                    pedido.review_status
+                )
+
+                && pedido.order_items.filter(
+                    otroItem =>
+                        otroItem.item_status === 'active'
+                ).length > 1
+
+                    ? `
+                        <button
+                            class="quitar-producto-pedido"
+                            data-order-item-id="${item.id}"
+                        >
+                            Quitar por no disponible
+                        </button>
+                    `
+
+                    : ''
+            }
+
+        </div>
+
+    </div>
+
+`).join('')
 
             : `
                 <p>
@@ -1150,6 +1231,98 @@ listaPedidos.addEventListener(
 
 
         await cargarPedidos();
+    }
+);
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.quitar-producto-pedido'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const orderItemId =
+            boton.dataset.orderItemId;
+
+
+        const confirmar = window.confirm(
+            '¿Seguro que este producto no está disponible y deseas quitarlo del pedido?'
+        );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        const textoOriginal =
+            boton.textContent;
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Quitando...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'remove_order_item',
+            {
+                p_order_item_id:
+                    orderItemId,
+
+                p_reason:
+                    'Producto no disponible'
+            }
+        );
+
+
+        if (error) {
+
+            console.error(error);
+
+
+            if (
+                error.message &&
+                error.message.includes(
+                    'CANNOT_REMOVE_LAST_ACTIVE_ITEM'
+                )
+            ) {
+
+                alert(
+                    'No puedes quitar el último producto. Si no hay ningún producto disponible, deberá cancelarse el pedido.'
+                );
+
+            } else {
+
+                alert(
+                    'No se pudo quitar el producto del pedido.'
+                );
+
+            }
+
+
+            boton.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        await cargarPedidos();
+
     }
 );
 
@@ -1778,6 +1951,81 @@ listaProductos.addEventListener(
     }
 );
 
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.confirmar-cambios-cliente'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const orderId =
+            boton.dataset.orderId;
+
+
+        const confirmar = window.confirm(
+            '¿El cliente confirmó que acepta los cambios y el nuevo total del pedido?'
+        );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        const textoOriginal =
+            boton.textContent;
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Registrando aprobación...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'confirm_order_changes',
+            {
+                p_order_id: orderId
+            }
+        );
+
+
+        if (error) {
+
+            console.error(error);
+
+            alert(
+                'No se pudo registrar la aprobación del cliente.'
+            );
+
+            boton.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        alert(
+            'Aprobación del cliente registrada correctamente.'
+        );
+
+
+        await cargarPedidos();
+
+    }
+);
 
 // ======================================================
 // FORMATEAR PRECIOS

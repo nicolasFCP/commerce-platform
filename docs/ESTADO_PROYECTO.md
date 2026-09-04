@@ -584,3 +584,62 @@ Siguiente etapa:
 - recálculo del total;
 - aprobación de cambios por el cliente;
 - determinación del total definitivo antes de solicitar el pago.
+
+---
+
+## 31. Revisión y ajuste de productos
+
+Los pedidos cuentan con una etapa de revisión antes de su preparación.
+
+Estados actuales de revisión:
+
+- `pending_review`
+- `changes_pending_customer`
+- `confirmed`
+- `not_applicable`
+
+Los productos incluidos en un pedido cuentan con estados independientes:
+
+- `active`
+- `removed`
+- `replaced`
+
+La plataforma permite quitar un producto no disponible sin eliminar el registro original.
+
+Al quitar un producto:
+
+- se conserva el producto solicitado originalmente;
+- se registra el motivo del cambio;
+- se registra el usuario administrativo responsable;
+- se registra la fecha del cambio;
+- se recalculan subtotal y total;
+- el pedido pasa a `changes_pending_customer`.
+
+Mientras existan cambios pendientes del cliente, el pedido no puede ser aceptado.
+
+Se creó `public.confirm_order_changes()` para registrar la aprobación del cliente.
+
+Una vez aprobados los cambios:
+
+`changes_pending_customer → confirmed`
+
+El pedido puede posteriormente pasar:
+
+`pending → accepted`
+
+Se verificó correctamente el primer flujo real de ajuste:
+
+- pedido original con Agua 600ml y Coca-Cola 1.5L;
+- total original de $9.000;
+- Agua 600ml marcada como no disponible;
+- producto conservado en el historial;
+- nuevo total de $6.500;
+- aprobación del cliente registrada;
+- pedido aceptado correctamente por la tienda.
+
+Siguiente objetivo:
+
+- reemplazar un producto por otro;
+- conservar relación entre producto original y reemplazo;
+- recalcular diferencias de precio;
+- solicitar nuevamente aprobación del cliente cuando sea necesario.
