@@ -60,6 +60,16 @@ PASO 3.8.1 — Contacto directo por WhatsApp desde pedidos.
 Siguiente objetivo:
 
 PASO 3.8.2 — Preparar automáticamente el aviso al cliente después de cambiar el estado del pedido.
+
+PASO 3.8 — Automatizaciones y flujo operativo en desarrollo.
+
+Completado:
+
+PASO 3.8.4 — Base de pagos, detalle de pedidos y protección de transferencias.
+
+Siguiente objetivo:
+
+PASO 3.8.5 — Revisión y ajuste de productos antes de confirmar el pedido.
 ---
 
 # Completado
@@ -523,3 +533,54 @@ Actualmente existen mensajes diferentes para los estados:
 La integración actualmente prepara el contacto y el mensaje, pero el envío final continúa siendo realizado por el usuario desde WhatsApp.
 
 Esta función constituye la primera automatización de comunicación de Commerce Platform.
+
+---
+
+## 30. Base de pagos y revisión de pedidos
+
+Commerce Platform cuenta ahora con una primera estructura independiente para gestionar el estado del pedido y el estado del pago.
+
+Los pedidos pueden almacenar:
+
+- método de pago;
+- estado del pago;
+- comprobante de pago;
+- fecha de confirmación del pago;
+- usuario administrativo que verificó el pago.
+
+Métodos soportados actualmente:
+
+- `transfer`;
+- `cash_on_delivery`.
+
+Estados de pago disponibles:
+
+- `pending`;
+- `proof_received`;
+- `paid`;
+- `rejected`.
+
+El checkout público permite al cliente seleccionar su método de pago al crear el pedido.
+
+Se creó `public.place_order_v2()` para conservar el sistema seguro de creación de pedidos existente e incorporar el método de pago.
+
+El panel administrativo muestra actualmente:
+
+- productos solicitados;
+- cantidades;
+- valores por producto;
+- método de pago;
+- estado del pago;
+- total del pedido.
+
+Para pedidos con método `transfer`, el sistema impide iniciar la preparación mientras `payment_status` sea diferente de `paid`.
+
+Esta protección se verificó correctamente desde el panel administrativo.
+
+Siguiente etapa:
+
+- revisión de disponibilidad;
+- eliminación o sustitución de productos;
+- recálculo del total;
+- aprobación de cambios por el cliente;
+- determinación del total definitivo antes de solicitar el pago.

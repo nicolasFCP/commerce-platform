@@ -279,3 +279,21 @@ Fecha: 3 de septiembre de 2026
 - Los mensajes incluyen el nombre del cliente y el total del pedido.
 - Se verificó correctamente la apertura de WhatsApp desde el administrador.
 - La prueba utilizó un número ficticio, por lo que WhatsApp confirmó que dicho número no está registrado.
+
+## Versión 0.0.23
+
+Fecha: 3 de septiembre de 2026
+
+- Se agregó infraestructura inicial para gestionar pagos en los pedidos.
+- Se agregaron `payment_method`, `payment_status`, `payment_proof_url`, `paid_at` y `payment_verified_by` a `orders`.
+- Se definieron los métodos de pago `transfer` y `cash_on_delivery`.
+- Se definieron estados iniciales de pago: `pending`, `proof_received`, `paid` y `rejected`.
+- Se creó `public.place_order_v2()` para recibir pedidos con método de pago sin modificar el flujo anterior.
+- Se verificó `place_order_v2()` mediante una prueba segura con `ROLLBACK`.
+- El checkout público permite elegir entre transferencia y efectivo contraentrega.
+- Se realizó correctamente el primer pedido real con método de pago `transfer`.
+- El panel administrativo muestra los productos incluidos en cada pedido.
+- El panel administrativo muestra el método y estado del pago.
+- Se agregó una protección para impedir que un pedido pagado por transferencia pase de `accepted` a `preparing` mientras el pago no esté confirmado.
+- Se verificó correctamente el bloqueo desde el navegador.
+- Se agregó un mensaje comprensible para informar al comercio cuando debe confirmar el pago antes de preparar.

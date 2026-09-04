@@ -438,6 +438,44 @@ function mostrarFormularioPedido() {
                 ></textarea>
             </label>
 
+<fieldset class="pago-opciones">
+
+    <legend>
+        Forma de pago
+    </legend>
+
+    <label class="pago-opcion">
+
+        <input
+            type="radio"
+            name="metodo-pago"
+            value="transfer"
+            required
+        >
+
+        <span>
+            Transferencia
+        </span>
+
+    </label>
+
+    <label class="pago-opcion">
+
+        <input
+            type="radio"
+            name="metodo-pago"
+            value="cash_on_delivery"
+            required
+        >
+
+        <span>
+            Efectivo contraentrega
+        </span>
+
+    </label>
+
+</fieldset>
+
             <button
                 id="enviar-pedido"
                 type="submit"
@@ -501,6 +539,23 @@ async function enviarPedido(event) {
     const notas =
         document.querySelector('#cliente-notas').value.trim();
 
+const metodoPagoSeleccionado =
+    document.querySelector(
+        'input[name="metodo-pago"]:checked'
+    );
+
+
+if (!metodoPagoSeleccionado) {
+
+    resultado.textContent =
+        'Selecciona una forma de pago.';
+
+    return;
+}
+
+
+const metodoPago =
+    metodoPagoSeleccionado.value;
 
     const items = carrito.map(item => ({
         product_id: item.id,
@@ -518,7 +573,7 @@ async function enviarPedido(event) {
         data,
         error
     } = await supabase.rpc(
-        'place_order',
+        'place_order_v2',
         {
             p_store_id: comercioActual.id,
             p_customer_name: nombre,
@@ -527,7 +582,8 @@ async function enviarPedido(event) {
             p_customer_email: null,
             p_fulfillment_type: 'delivery',
             p_delivery_address: direccion,
-            p_notes: notas || null
+p_notes: notas || null,
+p_payment_method: metodoPago
         }
     );
 
@@ -591,15 +647,39 @@ function agregarEstilosFormulario() {
             font-weight: bold;
         }
 
-        #pedido-form input,
-        #pedido-form textarea {
+        #pedido-form input:not([type="radio"]),
+#pedido-form textarea {
             width: 100%;
             padding: 14px;
             border: 1px solid #d1d5db;
             border-radius: 10px;
             font: inherit;
         }
+.pago-opciones {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+}
 
+.pago-opciones legend {
+    font-weight: bold;
+    padding: 0 6px;
+}
+
+#pedido-form .pago-opcion {
+    display: flex;
+    grid-template-columns: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-weight: normal;
+}
+
+.pago-opcion input {
+    width: auto;
+    margin: 0;
+}
         #enviar-pedido {
             width: 100%;
             padding: 15px;
@@ -621,6 +701,8 @@ function agregarEstilosFormulario() {
 
     document.head.appendChild(style);
 }
+
+
 
 /* =====================================================
    INICIAR

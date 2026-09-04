@@ -884,18 +884,27 @@ async function cargarPedidos() {
     } = await supabase
         .from('orders')
         .select(`
-            id,
-            created_at,
-            customer_name,
-            customer_phone,
-            fulfillment_type,
-            delivery_address,
-            notes,
-            status,
-            subtotal,
-            delivery_fee,
-            total
-        `)
+    id,
+    created_at,
+    customer_name,
+    customer_phone,
+    fulfillment_type,
+    delivery_address,
+    notes,
+    status,
+    subtotal,
+    delivery_fee,
+    total,
+    payment_method,
+payment_status,
+
+    order_items (
+        product_name,
+        quantity,
+        unit_price,
+        line_total
+    )
+`)
         .order(
             'created_at',
             {
@@ -964,6 +973,77 @@ async function cargarPedidos() {
                             `
                             : ''
                     }
+
+<div class="pedido-productos">
+
+    <strong>
+        Productos del pedido
+    </strong>
+
+    ${
+        pedido.order_items &&
+        pedido.order_items.length > 0
+
+            ? pedido.order_items.map(item => `
+
+                <div class="pedido-producto-item">
+
+                    <span>
+                        ${item.quantity}
+                        ×
+                        ${item.product_name}
+                    </span>
+
+                    <span>
+                        ${formatearPrecio(
+                            item.line_total
+                        )}
+                    </span>
+
+                </div>
+
+            `).join('')
+
+            : `
+                <p>
+                    Sin productos registrados.
+                </p>
+            `
+    }
+
+</div>
+
+<div class="pedido-pago">
+
+    <p>
+        💳 Método de pago:
+        <strong>
+            ${
+                pedido.payment_method === 'transfer'
+                    ? 'Transferencia'
+                    : pedido.payment_method === 'cash_on_delivery'
+                        ? 'Efectivo contraentrega'
+                        : 'No especificado'
+            }
+        </strong>
+    </p>
+
+    <p>
+        💰 Estado del pago:
+        <strong>
+            ${
+                pedido.payment_status === 'paid'
+                    ? 'Pagado'
+                    : pedido.payment_status === 'proof_received'
+                        ? 'Comprobante recibido'
+                        : pedido.payment_status === 'rejected'
+                            ? 'Rechazado'
+                            : 'Pendiente'
+            }
+        </strong>
+    </p>
+
+</div>
 
                     <span class="estado-pedido">
                         ${pedido.status}
@@ -1039,19 +1119,34 @@ listaPedidos.addEventListener(
 
         if (error) {
 
-            console.error(error);
+    console.error(error);
 
-            alert(
-                'No se pudo actualizar el pedido.'
-            );
 
-            botonPedido.disabled = false;
+    if (
+        error.message &&
+        error.message.includes(
+            'PAYMENT_REQUIRED_BEFORE_PREPARING'
+        )
+    ) {
 
-            botonPedido.textContent =
-                textoOriginal;
+        alert(
+            'Debes confirmar el pago antes de empezar a preparar este pedido.'
+        );
 
-            return;
-        }
+    } else {
+
+        alert(
+            'No se pudo actualizar el pedido.'
+        );
+
+    }
+
+
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+
+    return;
+}
 
 
         await cargarPedidos();
