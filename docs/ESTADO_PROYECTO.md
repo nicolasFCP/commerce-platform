@@ -757,3 +757,32 @@ Se verificó correctamente el flujo:
 Actualmente la recepción del comprobante se registra manualmente desde el panel.
 
 La columna `payment_proof_url` ya existe y queda preparada para almacenar posteriormente el comprobante real recibido desde la plataforma o mediante integración con WhatsApp.
+
+---
+
+## 34. Configuración de transferencias por comercio
+
+Se creó `store_payment_settings` para almacenar la configuración de pagos de cada comercio.
+
+Actualmente puede almacenar:
+
+- transferencias habilitadas;
+- banco o medio de pago;
+- tipo de cuenta;
+- número de cuenta;
+- titular;
+- instrucciones para el cliente.
+
+La configuración está aislada mediante RLS.
+
+El panel administrativo permite cargar y modificar estos datos.
+
+Se creó:
+
+`public.save_store_payment_settings()`
+
+La función obtiene automáticamente el comercio del usuario autenticado mediante `store_members`, evitando que el frontend tenga que enviar un `store_id`.
+
+Se verificó que los cambios realizados desde el panel quedan almacenados y vuelven a cargarse correctamente después de recargar la aplicación.
+
+Esta configuración será utilizada posteriormente para generar las instrucciones de pago enviadas al cliente.

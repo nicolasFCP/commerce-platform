@@ -709,7 +709,116 @@ textarea {
 
             </section>
 
+<!-- =================================================
+     CONFIGURACIÓN DE TRANSFERENCIAS
+================================================== -->
 
+<section
+    id="payment-settings-section"
+>
+
+    <h2>
+        Configuración de transferencias
+    </h2>
+
+
+    <label>
+
+        <input
+            id="transfer-enabled"
+            type="checkbox"
+        >
+
+        Aceptar pagos por transferencia
+
+    </label>
+
+
+    <label>
+        Banco
+
+        <input
+            id="bank-name"
+            type="text"
+            placeholder="Ej: Bancolombia"
+        >
+    </label>
+
+
+    <label>
+        Tipo de cuenta
+
+        <select
+            id="account-type"
+        >
+
+            <option value="">
+                Selecciona un tipo
+            </option>
+
+            <option value="savings">
+                Ahorros
+            </option>
+
+            <option value="checking">
+                Corriente
+            </option>
+
+            <option value="other">
+                Otro
+            </option>
+
+        </select>
+
+    </label>
+
+
+    <label>
+        Número de cuenta
+
+        <input
+            id="account-number"
+            type="text"
+            placeholder="Número de cuenta"
+        >
+    </label>
+
+
+    <label>
+        Titular
+
+        <input
+            id="account-holder"
+            type="text"
+            placeholder="Nombre del titular"
+        >
+    </label>
+
+
+    <label>
+        Instrucciones para el cliente
+
+        <textarea
+            id="transfer-instructions"
+            placeholder="Ej: Envía el comprobante después de realizar la transferencia."
+        ></textarea>
+
+    </label>
+
+
+    <button
+        id="guardar-payment-settings"
+        type="button"
+    >
+        Guardar configuración
+    </button>
+
+
+    <p
+        id="payment-settings-mensaje"
+    ></p>
+
+</section>
 
             <!-- =================================================
                  PRODUCTOS

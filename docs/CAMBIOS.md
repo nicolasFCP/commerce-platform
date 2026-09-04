@@ -363,3 +363,18 @@ Fecha: 4 de septiembre de 2026
 - Se verificó que una transferencia sin pago confirmado no puede iniciar preparación.
 - Se verificó que después de confirmar el pago el pedido puede pasar de `accepted` a `preparing`.
 - La estructura queda preparada para integrar posteriormente la recepción automática de comprobantes mediante WhatsApp.
+
+## Versión 0.0.27
+
+Fecha: 4 de septiembre de 2026
+
+- Se creó la tabla `store_payment_settings`.
+- Cada comercio puede tener su propia configuración para pagos por transferencia.
+- Se agregaron campos para banco, tipo de cuenta, número de cuenta, titular e instrucciones para el cliente.
+- Se habilitó RLS para aislar la configuración entre comercios.
+- Solo usuarios autenticados del comercio pueden consultar o modificar su configuración.
+- Se creó `public.save_store_payment_settings()`.
+- La función identifica automáticamente el comercio mediante el usuario autenticado y `store_members`.
+- El panel administrativo permite cargar y modificar la configuración de transferencias.
+- Se verificó la persistencia de la configuración después de recargar el panel.
+- Se dejó preparada la información necesaria para generar posteriormente mensajes automáticos de cobro por WhatsApp.

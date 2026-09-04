@@ -127,6 +127,38 @@ const productoMensaje = document.querySelector(
 
 let productosParaReemplazo = [];
 
+const transferEnabled = document.querySelector(
+    '#transfer-enabled'
+);
+
+const bankName = document.querySelector(
+    '#bank-name'
+);
+
+const accountType = document.querySelector(
+    '#account-type'
+);
+
+const accountNumber = document.querySelector(
+    '#account-number'
+);
+
+const accountHolder = document.querySelector(
+    '#account-holder'
+);
+
+const transferInstructions = document.querySelector(
+    '#transfer-instructions'
+);
+
+const guardarPaymentSettings = document.querySelector(
+    '#guardar-payment-settings'
+);
+
+const paymentSettingsMensaje = document.querySelector(
+    '#payment-settings-mensaje'
+);
+
 // ======================================================
 // LOGIN
 // ======================================================
@@ -141,6 +173,10 @@ productoForm.addEventListener(
     crearProducto
 );
 
+guardarPaymentSettings.addEventListener(
+    'click',
+    guardarConfiguracionPago
+);
 
 async function iniciarSesion(event) {
 
@@ -200,6 +236,8 @@ async function iniciarSesion(event) {
 await cargarPedidos();
 
 await cargarCategorias();
+
+await cargarPaymentSettings();
 
 await cargarDashboard();
 
@@ -2044,6 +2082,215 @@ async function crearProducto(event) {
 
     crearProductoButton.textContent =
         'Crear producto';
+}
+
+// ======================================================
+// CARGAR CONFIGURACIÓN DE TRANSFERENCIAS
+// ======================================================
+
+async function cargarPaymentSettings() {
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from('store_payment_settings')
+        .select(`
+            transfer_enabled,
+            bank_name,
+            account_type,
+            account_number,
+            account_holder,
+            transfer_instructions
+        `)
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            'Error cargando configuración de pagos:',
+            error
+        );
+
+        paymentSettingsMensaje.textContent =
+            'No se pudo cargar la configuración.';
+
+        return;
+    }
+
+
+    if (!data) {
+
+        paymentSettingsMensaje.textContent =
+            'Todavía no hay configuración de transferencia.';
+
+        return;
+    }
+
+
+    transferEnabled.checked =
+        data.transfer_enabled === true;
+
+
+    bankName.value =
+        data.bank_name ?? '';
+
+
+    accountType.value =
+        data.account_type ?? '';
+
+
+    accountNumber.value =
+        data.account_number ?? '';
+
+
+    accountHolder.value =
+        data.account_holder ?? '';
+
+
+    transferInstructions.value =
+        data.transfer_instructions ?? '';
+
+
+    paymentSettingsMensaje.textContent =
+        '';
+}
+
+// ======================================================
+// GUARDAR CONFIGURACIÓN DE TRANSFERENCIAS
+// ======================================================
+
+async function guardarConfiguracionPago() {
+
+    const transferenciasActivas =
+        transferEnabled.checked;
+
+
+    const banco =
+        bankName.value.trim();
+
+    const tipoCuenta =
+        accountType.value;
+
+    const numeroCuenta =
+        accountNumber.value.trim();
+
+    const titular =
+        accountHolder.value.trim();
+
+    const instrucciones =
+        transferInstructions.value.trim();
+
+
+    paymentSettingsMensaje.textContent = '';
+
+
+    // --------------------------------------------------
+    // SI LAS TRANSFERENCIAS ESTÁN ACTIVAS,
+    // EXIGIR LOS DATOS PRINCIPALES
+    // --------------------------------------------------
+
+    if (transferenciasActivas) {
+
+        if (!banco) {
+
+            paymentSettingsMensaje.textContent =
+                'Escribe el banco o medio de pago.';
+
+            return;
+        }
+
+
+        if (!tipoCuenta) {
+
+            paymentSettingsMensaje.textContent =
+                'Selecciona el tipo de cuenta.';
+
+            return;
+        }
+
+
+        if (!numeroCuenta) {
+
+            paymentSettingsMensaje.textContent =
+                'Escribe el número de cuenta.';
+
+            return;
+        }
+
+
+        if (!titular) {
+
+            paymentSettingsMensaje.textContent =
+                'Escribe el titular de la cuenta.';
+
+            return;
+        }
+    }
+
+
+    guardarPaymentSettings.disabled = true;
+
+    guardarPaymentSettings.textContent =
+        'Guardando...';
+
+
+    const {
+        error
+    } = await supabase.rpc(
+        'save_store_payment_settings',
+        {
+            p_transfer_enabled:
+                transferenciasActivas,
+
+            p_bank_name:
+                banco || null,
+
+            p_account_type:
+                tipoCuenta || null,
+
+            p_account_number:
+                numeroCuenta || null,
+
+            p_account_holder:
+                titular || null,
+
+            p_transfer_instructions:
+                instrucciones || null
+        }
+    );
+
+
+    if (error) {
+
+        console.error(
+            'Error guardando configuración de pagos:',
+            error
+        );
+
+
+        paymentSettingsMensaje.textContent =
+            'No se pudo guardar la configuración.';
+
+
+        guardarPaymentSettings.disabled = false;
+
+        guardarPaymentSettings.textContent =
+            'Guardar configuración';
+
+        return;
+    }
+
+
+    paymentSettingsMensaje.textContent =
+        'Configuración guardada correctamente ✅';
+
+
+    guardarPaymentSettings.disabled = false;
+
+    guardarPaymentSettings.textContent =
+        'Guardar configuración';
 }
 
 // ======================================================
