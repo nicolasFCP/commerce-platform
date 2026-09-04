@@ -401,3 +401,37 @@ Fecha: 4 de septiembre de 2026
   - `paid`.
 - El backend continúa protegiendo la transición hacia preparación aunque el frontend sea manipulado.
 - El flujo de transferencia queda preparado para su futura automatización mediante WhatsApp Cloud API.
+
+## Versión 0.0.29
+
+Fecha: 4 de septiembre de 2026
+
+- Se agregó configuración por comercio para habilitar o deshabilitar efectivo contraentrega.
+- Los comercios pueden configurar independientemente:
+  - pagos por transferencia;
+  - efectivo contraentrega.
+- Se creó `public.get_public_payment_methods()` para que el catálogo pueda consultar de forma segura únicamente los métodos de pago habilitados.
+- El catálogo ahora muestra solamente los métodos de pago disponibles para cada comercio.
+- Se verificó correctamente:
+  - solo transferencia;
+  - solo efectivo contraentrega;
+  - ambos métodos habilitados.
+- Se agregó protección en `change_order_status()` para impedir completar un pedido contraentrega mientras el pago siga pendiente.
+- Se creó `public.confirm_cash_on_delivery_payment()`.
+- La función registra:
+  - `payment_status = paid`;
+  - `paid_at`;
+  - `payment_verified_by`;
+  - cambio del pedido a `completed`.
+- El panel muestra "Confirmar efectivo recibido y entrega" cuando un pedido contraentrega está `out_for_delivery` y el pago sigue pendiente.
+- El pago y la entrega se confirman mediante una única operación segura.
+- Se verificó el flujo completo:
+  - pending;
+  - accepted;
+  - preparing;
+  - ready;
+  - out_for_delivery;
+  - completed.
+- Se verificó que `order_events` registra correctamente toda la secuencia y la razón `Efectivo contraentrega recibido`.
+- Esta operación queda preparada para ser reutilizada posteriormente desde un panel exclusivo para domiciliarios.
+

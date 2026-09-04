@@ -133,6 +133,10 @@ const transferEnabled = document.querySelector(
     '#transfer-enabled'
 );
 
+const cashOnDeliveryEnabled = document.querySelector(
+    '#cash-on-delivery-enabled'
+);
+
 const bankName = document.querySelector(
     '#bank-name'
 );
@@ -971,13 +975,30 @@ function crearBotonAccion(pedido) {
 
 
     else if (
-        pedido.status === 'out_for_delivery'
+    pedido.status === 'out_for_delivery'
+) {
+
+    if (
+        pedido.payment_method === 'cash_on_delivery'
+        &&
+        pedido.payment_status !== 'paid'
     ) {
 
-        siguienteEstado = 'completed';
-
-        texto = 'Marcar como entregado';
+        return `
+            <button
+                class="confirmar-efectivo-entrega"
+                data-order-id="${pedido.id}"
+            >
+                Confirmar efectivo recibido y entrega
+            </button>
+        `;
     }
+
+
+    siguienteEstado = 'completed';
+
+    texto = 'Marcar como entregado';
+}
 
 
     if (!siguienteEstado) {
@@ -1793,6 +1814,83 @@ listaPedidos.addEventListener(
 );
 
 // ======================================================
+// CONFIRMAR EFECTIVO CONTRAENTREGA Y ENTREGA
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.confirmar-efectivo-entrega'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const orderId =
+            boton.dataset.orderId;
+
+
+        const confirmar =
+            window.confirm(
+                '¿Confirmas que recibiste el efectivo del cliente y que el pedido fue entregado?'
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Confirmando pago y entrega...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'confirm_cash_on_delivery_payment',
+            {
+                p_order_id: orderId
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error confirmando efectivo contraentrega:',
+                error
+            );
+
+
+            alert(
+                'No se pudo confirmar el pago y la entrega.'
+            );
+
+
+            boton.disabled = false;
+
+            boton.textContent =
+                'Confirmar efectivo recibido y entrega';
+
+            return;
+        }
+
+
+        await cargarPedidos();
+
+    }
+);
+
+// ======================================================
 // REGISTRAR COMPROBANTE RECIBIDO
 // ======================================================
 
@@ -2227,6 +2325,7 @@ async function cargarPaymentSettings() {
         .from('store_payment_settings')
         .select(`
             transfer_enabled,
+            cash_on_delivery_enabled,
             bank_name,
             account_type,
             account_number,
@@ -2264,6 +2363,9 @@ async function cargarPaymentSettings() {
     transferEnabled.checked =
         data.transfer_enabled === true;
 
+        cashOnDeliveryEnabled.checked =
+    data.cash_on_delivery_enabled === true;
+
 
     bankName.value =
         data.bank_name ?? '';
@@ -2298,6 +2400,8 @@ async function guardarConfiguracionPago() {
     const transferenciasActivas =
         transferEnabled.checked;
 
+        const efectivoContraentregaActivo =
+    cashOnDeliveryEnabled.checked;
 
     const banco =
         bankName.value.trim();
@@ -2375,6 +2479,9 @@ async function guardarConfiguracionPago() {
         {
             p_transfer_enabled:
                 transferenciasActivas,
+
+            p_cash_on_delivery_enabled:
+    efectivoContraentregaActivo,    
 
             p_bank_name:
                 banco || null,

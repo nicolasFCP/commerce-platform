@@ -831,3 +831,80 @@ Actualmente los mensajes se generan automáticamente, pero el envío continúa s
 
 El siguiente objetivo posterior será conectar estos mismos eventos con WhatsApp Cloud API para realizar los envíos automáticamente.
 
+---
+
+## 36. Flujo completo de efectivo contraentrega
+
+Commerce Platform permite configurar por comercio si acepta pagos en efectivo contraentrega.
+
+La configuración se guarda en:
+
+`store_payment_settings.cash_on_delivery_enabled`
+
+El catálogo público consulta los métodos habilitados mediante:
+
+`public.get_public_payment_methods()`
+
+Esta función expone únicamente:
+
+- `transfer_enabled`;
+- `cash_on_delivery_enabled`.
+
+No expone datos bancarios privados.
+
+El catálogo muestra dinámicamente solo las formas de pago que el comercio tenga activadas.
+
+El flujo de un pedido con:
+
+`payment_method = cash_on_delivery`
+
+es:
+
+`pending -> accepted -> preparing -> ready -> out_for_delivery -> completed`
+
+A diferencia de los pedidos por transferencia, un pedido contraentrega puede pasar a preparación aunque:
+
+`payment_status = pending`
+
+porque el dinero se recibe al momento de la entrega.
+
+Sin embargo, `change_order_status()` impide pasar a:
+
+`completed`
+
+si el pedido es contraentrega y:
+
+`payment_status != paid`
+
+Se creó:
+
+`public.confirm_cash_on_delivery_payment()`
+
+Esta función solo puede ejecutarse para un pedido contraentrega que se encuentre en:
+
+`out_for_delivery`
+
+Cuando el usuario confirma que recibió el efectivo y entregó el pedido, la función registra:
+
+- `payment_status = paid`;
+- `paid_at = now()`;
+- `payment_verified_by = auth.uid()`;
+- cambio de estado a `completed`.
+
+La transición final reutiliza `change_order_status()`, por lo que también queda registrada en `order_events`.
+
+Se verificó en un pedido real de prueba que el historial completo fue:
+
+- `created -> pending`;
+- `pending -> accepted`;
+- `accepted -> preparing`;
+- `preparing -> ready`;
+- `ready -> out_for_delivery`;
+- `out_for_delivery -> completed`.
+
+El último evento quedó registrado con la razón:
+
+`Efectivo contraentrega recibido`
+
+Esta operación queda preparada para ser reutilizada posteriormente desde un panel exclusivo para domiciliarios.
+

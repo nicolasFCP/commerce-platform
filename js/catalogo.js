@@ -13,6 +13,10 @@ let productosDisponibles = [];
 let carrito = [];
 let comercioActual = null;
 
+let metodosPagoActuales = {
+    transfer_enabled: false,
+    cash_on_delivery_enabled: false
+};
 
 /* =====================================================
    CARGAR CATÁLOGO
@@ -43,6 +47,34 @@ async function cargarCatalogo() {
 
 
     comercioActual = store;
+
+    const {
+    data: paymentMethods,
+    error: paymentMethodsError
+} = await supabase.rpc(
+    'get_public_payment_methods',
+    {
+        p_store_id: store.id
+    }
+);
+
+
+if (paymentMethodsError) {
+
+    console.error(
+        'Error cargando métodos de pago:',
+        paymentMethodsError
+    );
+
+} else if (
+    paymentMethods
+    &&
+    paymentMethods.length > 0
+) {
+
+    metodosPagoActuales =
+        paymentMethods[0];
+}
 
 nombreComercio.textContent = store.name;
 estado.textContent = 'Catálogo conectado con Supabase';
@@ -444,35 +476,52 @@ function mostrarFormularioPedido() {
         Forma de pago
     </legend>
 
-    <label class="pago-opcion">
+    ${
+        metodosPagoActuales.transfer_enabled
 
-        <input
-            type="radio"
-            name="metodo-pago"
-            value="transfer"
-            required
-        >
+            ? `
+                <label class="pago-opcion">
 
-        <span>
-            Transferencia
-        </span>
+                    <input
+                        type="radio"
+                        name="metodo-pago"
+                        value="transfer"
+                        required
+                    >
 
-    </label>
+                    <span>
+                        Transferencia
+                    </span>
 
-    <label class="pago-opcion">
+                </label>
+            `
 
-        <input
-            type="radio"
-            name="metodo-pago"
-            value="cash_on_delivery"
-            required
-        >
+            : ''
+    }
 
-        <span>
-            Efectivo contraentrega
-        </span>
 
-    </label>
+    ${
+        metodosPagoActuales.cash_on_delivery_enabled
+
+            ? `
+                <label class="pago-opcion">
+
+                    <input
+                        type="radio"
+                        name="metodo-pago"
+                        value="cash_on_delivery"
+                        required
+                    >
+
+                    <span>
+                        Efectivo contraentrega
+                    </span>
+
+                </label>
+            `
+
+            : ''
+    }
 
 </fieldset>
 
