@@ -1108,3 +1108,156 @@ El flujo queda definido de la siguiente manera:
 → `out_for_delivery`
 → domiciliario entrega/cobra
 → `completed`
+
+---
+
+## 39. Integración inicial con WhatsApp Cloud API
+
+Se inició la integración real de Commerce Platform con WhatsApp Business Platform mediante Meta Cloud API y Supabase Edge Functions.
+
+### Aplicación de Meta
+
+Se creó una aplicación de Meta llamada:
+
+`Commerce Platform`
+
+asociada al portafolio comercial:
+
+`NOVA Digital Studio`
+
+con el caso de uso:
+
+`Contactarte con los clientes a través de WhatsApp`.
+
+Se habilitó el entorno de prueba de WhatsApp Cloud API y se verificó correctamente un número destinatario.
+
+También se realizó un primer envío manual desde las herramientas de Meta y el mensaje fue recibido correctamente en WhatsApp.
+
+### Backend seguro con Supabase Edge Functions
+
+Se creó y desplegó la Edge Function:
+
+`whatsapp-send-test`
+
+La función utiliza autenticación:
+
+`auth: "user"`
+
+por lo que solo puede ser invocada por usuarios autenticados de Commerce Platform.
+
+Las credenciales de Meta no están almacenadas en el frontend ni en GitHub.
+
+Se guardan como secretos de Supabase:
+
+- `WHATSAPP_ACCESS_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+
+La Edge Function accede a ellos mediante:
+
+`Deno.env.get()`.
+
+### Primer envío desde Commerce Platform
+
+Se verificó correctamente el flujo:
+
+`admin autenticado`
+→ `Supabase Edge Function`
+→ `Meta Graph API`
+→ `WhatsApp`
+
+Commerce Platform logró enviar un mensaje real a WhatsApp sin utilizar directamente el botón de envío de Meta.
+
+### Envío basado únicamente en order_id
+
+La integración fue posteriormente reforzada para evitar que el frontend envíe manualmente:
+
+- número de teléfono;
+- nombre del cliente;
+- datos del pedido.
+
+Ahora `admin.js` envía solamente:
+
+`order_id`
+
+a la Edge Function.
+
+La Edge Function consulta el pedido desde Supabase utilizando el cliente autenticado y respetando RLS.
+
+Desde la base de datos obtiene:
+
+- `customer_name`;
+- `customer_phone`;
+- `status`;
+- `fulfillment_type`.
+
+Esto evita que el navegador pueda decidir libremente el destinatario del WhatsApp.
+
+### Validación del estado del pedido
+
+Por ahora, la Edge Function solo permite enviar el mensaje cuando:
+
+`status = accepted`
+
+Si el pedido todavía no está aceptado, el envío es rechazado.
+
+### Normalización inicial de teléfonos colombianos
+
+Cuando el teléfono almacenado tiene 10 dígitos y comienza por `3`, la Edge Function agrega automáticamente el indicativo:
+
+`57`
+
+antes de enviarlo a Meta.
+
+### Automatización al aceptar el pedido
+
+Se integró el envío con el flujo administrativo.
+
+Cuando el comercio cambia un pedido:
+
+`pending → accepted`
+
+y Supabase confirma correctamente el cambio de estado, `admin.js` invoca automáticamente:
+
+`whatsapp-send-test`
+
+enviando únicamente el `order_id`.
+
+La Edge Function consulta los datos reales del pedido y envía el mensaje mediante WhatsApp Cloud API.
+
+Se realizó una prueba real con:
+
+`Cliente WhatsApp Real`
+
+El resultado fue exitoso:
+
+`pending`
+→ `accepted`
+→ `order_id`
+→ `Edge Function`
+→ `datos reales desde PostgreSQL`
+→ `Meta Cloud API`
+→ `WhatsApp recibido`
+
+El nombre real del cliente y un identificador derivado del UUID del pedido llegaron correctamente al mensaje.
+
+### Plantilla temporal de Meta
+
+Durante esta etapa de pruebas se utiliza la plantilla proporcionada por Meta:
+
+`jaspers_market_order_confirmation_v1`
+
+en idioma:
+
+`en_US`
+
+Esta plantilla es temporal y será reemplazada posteriormente por plantillas propias de Commerce Platform en español.
+
+### Código versionado localmente
+
+La Edge Function desplegada también quedó almacenada en el repositorio en:
+
+`supabase/functions/whatsapp-send-test/index.ts`
+
+El repositorio contiene únicamente referencias a variables de entorno.
+
+Ningún token de Meta ni secreto de producción debe almacenarse en archivos versionados.

@@ -238,6 +238,7 @@ async function iniciarSesion(event) {
 
     pedidosPanel.style.display = 'block';
 
+ 
 
     await cargarProductos();
 
@@ -1731,7 +1732,7 @@ ${crearSelectorReemplazo(
 }
 
 
-// ======================================================
+// // ======================================================
 // CAMBIAR ESTADO DE PEDIDO
 // ======================================================
 
@@ -1745,7 +1746,6 @@ listaPedidos.addEventListener(
 
 
         if (!botonPedido) {
-
             return;
         }
 
@@ -1766,6 +1766,10 @@ listaPedidos.addEventListener(
             'Actualizando...';
 
 
+        // ==================================================
+        // CAMBIAR ESTADO EN SUPABASE
+        // ==================================================
+
         const {
             error
         } = await supabase.rpc(
@@ -1780,124 +1784,81 @@ listaPedidos.addEventListener(
 
         if (error) {
 
-    console.error(error);
-
-
-    if (
-        error.message &&
-        error.message.includes(
-            'PAYMENT_REQUIRED_BEFORE_PREPARING'
-        )
-    ) {
-
-        alert(
-            'Debes confirmar el pago antes de empezar a preparar este pedido.'
-        );
-
-    } else {
-
-        alert(
-            'No se pudo actualizar el pedido.'
-        );
-
-    }
-
-
-    boton.disabled = false;
-    boton.textContent = textoOriginal;
-
-    return;
-}
-
-
-        await cargarPedidos();
-    }
-);
-
-listaPedidos.addEventListener(
-    'click',
-    async event => {
-
-        const boton =
-            event.target.closest(
-                '.quitar-producto-pedido'
-            );
-
-
-        if (!boton) {
-            return;
-        }
-
-
-        const orderItemId =
-            boton.dataset.orderItemId;
-
-
-        const confirmar = window.confirm(
-            '¿Seguro que este producto no está disponible y deseas quitarlo del pedido?'
-        );
-
-
-        if (!confirmar) {
-            return;
-        }
-
-
-        const textoOriginal =
-            boton.textContent;
-
-
-        boton.disabled = true;
-
-        boton.textContent =
-            'Quitando...';
-
-
-        const {
-            error
-        } = await supabase.rpc(
-            'remove_order_item',
-            {
-                p_order_item_id:
-                    orderItemId,
-
-                p_reason:
-                    'Producto no disponible'
-            }
-        );
-
-
-        if (error) {
-
             console.error(error);
 
 
             if (
                 error.message &&
                 error.message.includes(
-                    'CANNOT_REMOVE_LAST_ACTIVE_ITEM'
+                    'PAYMENT_REQUIRED_BEFORE_PREPARING'
                 )
             ) {
 
                 alert(
-                    'No puedes quitar el último producto. Si no hay ningún producto disponible, deberá cancelarse el pedido.'
+                    'Debes confirmar el pago antes de empezar a preparar este pedido.'
                 );
 
             } else {
 
                 alert(
-                    'No se pudo quitar el producto del pedido.'
+                    'No se pudo actualizar el pedido.'
                 );
 
             }
 
 
-            boton.disabled = false;
+            botonPedido.disabled = false;
 
-            boton.textContent =
+            botonPedido.textContent =
                 textoOriginal;
 
             return;
+        }
+
+
+        // ==================================================
+        // WHATSAPP AUTOMÁTICO AL ACEPTAR EL PEDIDO
+        // ==================================================
+
+        if (nextStatus === 'accepted') {
+
+            const {
+                data: whatsappData,
+                error: whatsappError
+            } = await supabase.functions.invoke(
+                'whatsapp-send-test',
+                {
+                    body: {
+                        order_id: orderId
+                    }
+                }
+            );
+
+
+            if (whatsappError) {
+
+                console.error(
+                    'Error enviando WhatsApp del pedido:',
+                    whatsappError
+                );
+
+                alert(
+                    'El pedido fue aceptado, pero no se pudo enviar el WhatsApp.'
+                );
+
+            } else {
+
+                console.log(
+                    'WhatsApp automático:',
+                    whatsappData
+                );
+
+                alert(
+                    'Pedido aceptado y WhatsApp enviado ✅'
+                );
+
+            }
+
         }
 
 
@@ -1905,7 +1866,6 @@ listaPedidos.addEventListener(
 
     }
 );
-
 // ======================================================
 // ASIGNAR DOMICILIARIO A PEDIDO
 // ======================================================
