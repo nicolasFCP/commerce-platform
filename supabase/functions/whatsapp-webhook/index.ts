@@ -1,5 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+import {
+    createClient
+} from "npm:@supabase/supabase-js@2";
+
 
 // ==========================================
 // CONVERTIR BYTES A HEXADECIMAL
@@ -382,11 +386,321 @@ const whatsappBusinessAccountId =
     ?? null;
 
 
+    // ==================================
+// CLIENTE INTERNO DE SUPABASE
+// ==================================
+
+const supabaseUrl =
+    Deno.env.get(
+        "SUPABASE_URL"
+    );
+
+
+const serviceRoleKey =
+    Deno.env.get(
+        "SUPABASE_SERVICE_ROLE_KEY"
+    );
+
+
+if (
+    !supabaseUrl
+    ||
+    !serviceRoleKey
+) {
+
+    console.error(
+        "Faltan credenciales internas de Supabase"
+    );
+
+
+    return new Response(
+        "Error de configuración",
+        {
+            status: 500
+        }
+    );
+
+}
+
+
+const supabaseAdmin =
+    createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false
+            }
+        }
+    );
+
+
+// ==================================
+// IDENTIFICAR EL COMERCIO
+// ==================================
+
+const {
+    data: whatsappSettings,
+    error: whatsappSettingsError
+} = await supabaseAdmin
+    .from(
+        "store_whatsapp_settings"
+    )
+    .select(`
+        store_id,
+        display_phone_number,
+        active
+    `)
+    .eq(
+        "phone_number_id",
+        businessPhoneNumberId
+    )
+    .eq(
+        "active",
+        true
+    )
+    .maybeSingle();
+
+
+if (whatsappSettingsError) {
+
+    console.error(
+        "Error identificando comercio:",
+        whatsappSettingsError
+    );
+
+
+    return new Response(
+        "Error interno",
+        {
+            status: 500
+        }
+    );
+
+}
+
+
+if (!whatsappSettings) {
+
+    console.warn(
+        "WhatsApp recibido para un número no asociado:",
+        businessPhoneNumberId
+    );
+
+} else {
+
+    console.log(
+        "Comercio identificado:",
+        JSON.stringify({
+            store_id:
+                whatsappSettings.store_id,
+
+            phone_number_id:
+                businessPhoneNumberId,
+
+            display_phone_number:
+                whatsappSettings.display_phone_number
+        })
+    );
+
+}    
+
+
     const text =
         messageType === "text"
             ? message?.text?.body ?? null
             : null;
 
+    // ==================================
+// CREAR O ACTUALIZAR CONVERSACIÓN
+// ==================================
+
+let conversationId =
+    null;
+
+
+if (
+    whatsappSettings
+    &&
+    senderPhone
+) {
+
+    const now =
+        new Date().toISOString();
+
+
+    const {
+        data: conversation,
+        error: conversationError
+    } = await supabaseAdmin
+        .from(
+            "whatsapp_conversations"
+        )
+        .upsert(
+            {
+                store_id:
+                    whatsappSettings.store_id,
+
+                customer_phone:
+                    senderPhone,
+
+                customer_name:
+                    senderName,
+
+                last_message_at:
+                    now,
+
+                updated_at:
+                    now,
+
+                active:
+                    true
+            },
+            {
+                onConflict:
+                    "store_id,customer_phone"
+            }
+        )
+        .select(
+            "id"
+        )
+        .single();
+
+
+    if (conversationError) {
+
+        console.error(
+            "Error guardando conversación WhatsApp:",
+            conversationError
+        );
+
+
+        return new Response(
+            "Error interno",
+            {
+                status: 500
+            }
+        );
+
+    }
+
+
+    conversationId =
+        conversation.id;
+
+
+    console.log(
+        "Conversación WhatsApp identificada:",
+        JSON.stringify({
+            conversation_id:
+                conversationId,
+
+            store_id:
+                whatsappSettings.store_id,
+
+            customer_phone:
+                senderPhone
+        })
+    );
+
+}        
+
+// ==================================
+// GUARDAR MENSAJE ENTRANTE
+// ==================================
+
+if (
+    whatsappSettings
+    &&
+    conversationId
+    &&
+    message?.id
+) {
+
+    const {
+        data: savedMessage,
+        error: messageSaveError
+    } = await supabaseAdmin
+        .from(
+            "whatsapp_messages"
+        )
+        .upsert(
+            {
+                store_id:
+                    whatsappSettings.store_id,
+
+                conversation_id:
+                    conversationId,
+
+                whatsapp_message_id:
+                    message.id,
+
+                direction:
+                    "incoming",
+
+                message_type:
+                    messageType ?? "unknown",
+
+                message_text:
+                    text,
+
+                sender_phone:
+                    senderPhone,
+
+                recipient_phone:
+                    whatsappSettings.display_phone_number,
+
+                message_status:
+                    "received",
+
+                raw_payload:
+                    body
+            },
+            {
+                onConflict:
+                    "whatsapp_message_id"
+            }
+        )
+        .select(
+            "id"
+        )
+        .single();
+
+
+    if (messageSaveError) {
+
+        console.error(
+            "Error guardando mensaje WhatsApp:",
+            messageSaveError
+        );
+
+
+        return new Response(
+            "Error interno",
+            {
+                status: 500
+            }
+        );
+
+    }
+
+
+    console.log(
+        "Mensaje WhatsApp guardado:",
+        JSON.stringify({
+            message_id:
+                savedMessage.id,
+
+            conversation_id:
+                conversationId,
+
+            whatsapp_message_id:
+                message.id
+        })
+    );
+
+}
 
     console.log(
         "Mensaje entrante procesado:",

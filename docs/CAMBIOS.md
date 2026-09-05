@@ -720,3 +720,164 @@ Fecha: 5 de septiembre de 2026
   `supabase/functions/whatsapp-send-test/index.ts`
 
 - Se mantiene la regla de seguridad de no almacenar secretos reales en archivos versionados ni en GitHub.
+
+## Versión 0.0.33
+
+Fecha: 5 de septiembre de 2026
+
+- Se creó la infraestructura para recibir eventos reales de WhatsApp mediante una Supabase Edge Function:
+
+  `whatsapp-webhook`
+
+- Se configuró la verificación del webhook de Meta mediante URL pública y token de verificación.
+
+- Se deshabilitó la verificación JWT de Supabase para permitir que Meta invoque directamente el webhook.
+
+- Se implementó validación criptográfica de los eventos recibidos desde Meta.
+
+- Los eventos válidos son registrados como:
+
+  `Evento WhatsApp firmado y válido`
+
+- Se creó la tabla `store_whatsapp_settings`.
+
+- Cada comercio puede asociarse de manera independiente con:
+
+  - `phone_number_id`;
+  - `whatsapp_business_account_id`;
+  - número visible de WhatsApp;
+  - estado activo de la integración.
+
+- Se configuró aislamiento de la configuración de WhatsApp por comercio.
+
+- Se otorgó al backend seguro acceso de lectura a `store_whatsapp_settings` mediante `service_role`.
+
+- El webhook identifica automáticamente a qué comercio pertenece un mensaje utilizando el `phone_number_id` recibido desde Meta.
+
+- Se verificó correctamente la identificación de `Mercado Demo` desde un evento real de WhatsApp.
+
+- Se creó y publicó una Política de Privacidad pública para Commerce Platform en GitHub Pages.
+
+- La URL pública de la política fue configurada en Meta Developers.
+
+- Se completaron los requisitos obligatorios para publicar la aplicación de Meta.
+
+- La aplicación `Commerce Platform` fue publicada correctamente y quedó disponible para uso público.
+
+- Se comprobó mediante Graph API la suscripción de aplicaciones a la cuenta de WhatsApp Business.
+
+- Se detectó que inicialmente `Commerce Platform` no estaba suscrita a la cuenta de WhatsApp Business utilizada para las pruebas.
+
+- Se suscribió correctamente `Commerce Platform` mediante:
+
+  `/{whatsapp_business_account_id}/subscribed_apps`
+
+- Se verificó posteriormente que `Commerce Platform` aparece entre las aplicaciones suscritas.
+
+- Se realizó la primera recepción real desde un WhatsApp externo hacia Commerce Platform.
+
+- Se verificó el flujo real:
+
+  `WhatsApp → Meta → webhook → validación de firma → identificación del comercio`
+
+- El webhook recibió correctamente:
+
+  - `phone_number_id`;
+  - `whatsapp_business_account_id`;
+  - teléfono del remitente;
+  - nombre del remitente;
+  - tipo de mensaje;
+  - texto del mensaje;
+  - identificador único del mensaje de WhatsApp.
+
+- Se confirmó que un mensaje real enviado desde WhatsApp fue asociado automáticamente con `Mercado Demo`.
+
+- Los secretos utilizados para validar Meta y acceder a Supabase permanecen almacenados únicamente como secretos del backend y no fueron incluidos en el repositorio.
+
+
+## Versión 0.0.34
+
+Fecha: 5 de septiembre de 2026
+
+- Se creó la tabla `whatsapp_conversations`.
+
+- Cada conversación se relaciona con:
+
+  - un comercio;
+  - teléfono del cliente;
+  - nombre del cliente;
+  - fecha del último mensaje;
+  - estado activo.
+
+- Se agregó una restricción única por:
+
+  `store_id + customer_phone`
+
+- Un mismo cliente conserva una única conversación dentro del mismo comercio.
+
+- Se creó la tabla `whatsapp_messages`.
+
+- Cada mensaje puede almacenar:
+
+  - comercio;
+  - conversación;
+  - pedido relacionado opcional;
+  - identificador del mensaje de WhatsApp;
+  - dirección del mensaje;
+  - tipo de mensaje;
+  - texto;
+  - teléfono del remitente;
+  - teléfono destinatario;
+  - estado;
+  - payload original recibido desde Meta.
+
+- Se definieron las direcciones:
+
+  - `incoming`;
+  - `outgoing`.
+
+- Se habilitó RLS para `whatsapp_conversations` y `whatsapp_messages`.
+
+- Los usuarios autenticados del comercio pueden consultar únicamente las conversaciones y mensajes pertenecientes a sus propios comercios.
+
+- El backend seguro utiliza `service_role` para crear y actualizar conversaciones y mensajes recibidos desde Meta.
+
+- El webhook crea automáticamente una conversación cuando recibe el primer mensaje de un cliente.
+
+- Si el mismo cliente vuelve a escribir al mismo comercio, se reutiliza automáticamente la conversación existente.
+
+- Se verificó mediante una prueba real la creación de una conversación para un cliente de `Mercado Demo`.
+
+- Se agregó persistencia automática de cada mensaje entrante en `whatsapp_messages`.
+
+- Los mensajes recibidos quedan almacenados con:
+
+  `direction = incoming`
+
+  `message_type = text`
+
+  `message_status = received`
+
+- Se agregó protección contra mensajes duplicados utilizando el identificador único:
+
+  `whatsapp_message_id`
+
+- El webhook utiliza `upsert` para soportar posibles reintentos de Meta sin generar registros duplicados.
+
+- Se verificó que no existen `whatsapp_message_id` duplicados en la base de datos.
+
+- Se enviaron dos mensajes reales consecutivos desde el mismo cliente.
+
+- Ambos mensajes fueron almacenados como registros independientes.
+
+- Ambos quedaron relacionados con el mismo `conversation_id`.
+
+- Se verificó correctamente el flujo:
+
+  `cliente → WhatsApp → Meta → webhook → comercio → conversación → mensaje persistente`
+
+- Commerce Platform ya puede recibir, identificar por comercio, agrupar por conversación y almacenar mensajes reales de WhatsApp.
+
+- La estructura queda preparada para el siguiente paso:
+
+  `respuesta automática desde Commerce Platform → WhatsApp`

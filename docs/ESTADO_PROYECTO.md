@@ -33,43 +33,35 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.4 — Gestión de productos desde el panel administrativo funcionando.
-
-El comercio ya puede consultar, crear y administrar productos directamente desde su panel.
-
-Siguiente objetivo:
-
-PASO 3.5 — Dashboard y resumen operativo del negocio funcionando.
-
-Siguiente objetivo:
-
-PASO 3.6 — Reportes básicos de ventas funcionando.
-
-Siguiente objetivo:
-
-PASO 3.7 — Análisis de productos y ventas funcionando.
-
-Siguiente objetivo:
-
-PASO 3.8 — Automatizaciones y comunicación con clientes en desarrollo.
+PASO 3.17 — Recepción y persistencia de conversaciones de WhatsApp funcionando.
 
 Completado:
 
-PASO 3.8.1 — Contacto directo por WhatsApp desde pedidos.
+PASO 3.16 — Webhook seguro de WhatsApp, identificación por comercio y recepción de mensajes reales.
+
+PASO 3.17 — Conversaciones y mensajes entrantes de WhatsApp almacenados en PostgreSQL.
+
+Actualmente Commerce Platform puede:
+
+- recibir mensajes reales desde WhatsApp;
+- validar que los eventos procedan de Meta;
+- identificar automáticamente a qué comercio pertenece el número receptor;
+- identificar al cliente que escribió;
+- crear o reutilizar una conversación;
+- guardar cada mensaje recibido;
+- evitar duplicados mediante `whatsapp_message_id`;
+- mantener aislamiento multi-comercio.
 
 Siguiente objetivo:
 
-PASO 3.8.2 — Preparar automáticamente el aviso al cliente después de cambiar el estado del pedido.
+PASO 3.18 — Envío y registro de respuestas automáticas desde Commerce Platform hacia WhatsApp.
 
-PASO 3.8 — Automatizaciones y flujo operativo en desarrollo.
+Objetivo inmediato del MVP:
 
-Completado:
+`mensaje recibido → identificar comercio/cliente → guardar conversación → generar respuesta → enviar WhatsApp → guardar respuesta`
 
-PASO 3.8.4 — Base de pagos, detalle de pedidos y protección de transferencias.
+La prioridad actual es completar el flujo mínimo automatizado necesario para comenzar demostraciones y ventas comerciales.
 
-Siguiente objetivo:
-
-PASO 3.8.5 — Revisión y ajuste de productos antes de confirmar el pedido.
 ---
 
 # Completado
@@ -1261,3 +1253,297 @@ La Edge Function desplegada también quedó almacenada en el repositorio en:
 El repositorio contiene únicamente referencias a variables de entorno.
 
 Ningún token de Meta ni secreto de producción debe almacenarse en archivos versionados.
+
+---
+
+## 40. Webhook real y seguro de WhatsApp por comercio
+
+Commerce Platform cuenta con una Edge Function pública para recibir eventos de WhatsApp:
+
+`whatsapp-webhook`
+
+La función fue configurada como webhook de Meta y permite recibir eventos enviados directamente por WhatsApp Business Platform.
+
+### Verificación del webhook
+
+Se configuró correctamente:
+
+- URL pública del webhook;
+- token de verificación;
+- desafío de verificación enviado por Meta.
+
+Se confirmó en los logs:
+
+`Webhook verificado correctamente`
+
+### Recepción pública desde Meta
+
+La Edge Function no requiere autenticación JWT de Supabase porque Meta debe poder invocarla directamente.
+
+La seguridad del webhook no depende de que cualquier visitante conozca la URL.
+
+Se implementó validación criptográfica de los eventos recibidos desde Meta.
+
+Los eventos válidos son registrados como:
+
+`Evento WhatsApp firmado y válido`
+
+### Configuración de WhatsApp por comercio
+
+Se creó:
+
+`store_whatsapp_settings`
+
+Esta tabla permite asociar cada comercio con su propia configuración de WhatsApp.
+
+Actualmente almacena:
+
+- `store_id`;
+- `phone_number_id`;
+- `whatsapp_business_account_id`;
+- `display_phone_number`;
+- estado activo.
+
+La estructura permite que Commerce Platform maneje posteriormente diferentes números de WhatsApp para diferentes comercios.
+
+### Identificación automática del comercio
+
+Cuando llega un webhook, Commerce Platform obtiene:
+
+`metadata.phone_number_id`
+
+y busca el comercio relacionado en:
+
+`store_whatsapp_settings`
+
+De esta forma un mismo webhook puede recibir mensajes destinados a diferentes comercios y determinar automáticamente quién debe procesarlos.
+
+Se verificó correctamente con:
+
+`Mercado Demo`
+
+Datos utilizados durante la prueba:
+
+`phone_number_id = 1307412325785663`
+
+`whatsapp_business_account_id = 928821130291878`
+
+El webhook identificó correctamente el `store_id` correspondiente.
+
+### Publicación de la aplicación de Meta
+
+Se creó y publicó una Política de Privacidad pública para Commerce Platform mediante GitHub Pages.
+
+Esto permitió completar los requisitos obligatorios de publicación de la aplicación.
+
+La aplicación de Meta:
+
+`Commerce Platform`
+
+fue publicada correctamente.
+
+### Suscripción a la cuenta de WhatsApp Business
+
+Se verificaron las aplicaciones suscritas mediante Graph API utilizando:
+
+`/{whatsapp_business_account_id}/subscribed_apps`
+
+Inicialmente Commerce Platform no aparecía entre las aplicaciones suscritas a la cuenta de WhatsApp Business.
+
+Se realizó la suscripción mediante una petición `POST`.
+
+Meta respondió:
+
+`success = true`
+
+Posteriormente se verificó mediante `GET` que:
+
+`Commerce Platform`
+
+aparece correctamente entre las aplicaciones suscritas.
+
+### Primera recepción real
+
+Después de publicar y suscribir la aplicación se envió un mensaje desde un WhatsApp real al número de prueba de Meta.
+
+Se verificó correctamente:
+
+`WhatsApp real`
+
+→ `Meta`
+
+→ `whatsapp-webhook`
+
+→ validación de firma
+
+→ identificación de `Mercado Demo`
+
+→ procesamiento del mensaje.
+
+El webhook obtiene actualmente:
+
+- teléfono del remitente;
+- nombre del remitente;
+- tipo de mensaje;
+- texto;
+- `whatsapp_message_id`;
+- `phone_number_id`;
+- `whatsapp_business_account_id`.
+
+Esto confirma que Commerce Platform ya puede recibir mensajes reales de clientes y determinar automáticamente a qué comercio pertenecen.
+
+---
+
+## 41. Conversaciones y mensajes persistentes de WhatsApp
+
+Se creó una estructura persistente para almacenar las conversaciones recibidas desde WhatsApp.
+
+### Conversaciones
+
+Se creó:
+
+`whatsapp_conversations`
+
+Cada conversación almacena:
+
+- comercio;
+- teléfono del cliente;
+- nombre del cliente;
+- fecha del último mensaje;
+- estado activo;
+- fechas de creación y actualización.
+
+Se agregó una restricción única:
+
+`store_id + customer_phone`
+
+Esto garantiza que un mismo cliente mantenga una sola conversación dentro de cada comercio.
+
+Un mismo número puede tener conversaciones independientes con comercios diferentes.
+
+### Mensajes
+
+Se creó:
+
+`whatsapp_messages`
+
+Cada mensaje puede almacenar:
+
+- `store_id`;
+- `conversation_id`;
+- `order_id` opcional;
+- `whatsapp_message_id`;
+- dirección;
+- tipo;
+- texto;
+- teléfono remitente;
+- teléfono destinatario;
+- estado;
+- payload original recibido desde Meta;
+- fecha de creación.
+
+Las direcciones soportadas actualmente son:
+
+- `incoming`;
+- `outgoing`.
+
+### Seguridad multi-comercio
+
+Se habilitó RLS sobre:
+
+- `whatsapp_conversations`;
+- `whatsapp_messages`.
+
+Los usuarios administrativos pueden consultar únicamente información perteneciente a sus propios comercios.
+
+La recepción automática desde Meta es procesada mediante el backend seguro utilizando `service_role`.
+
+### Creación automática de conversaciones
+
+Cuando un cliente escribe por primera vez, el webhook crea automáticamente una conversación.
+
+Cuando vuelve a escribir:
+
+- no crea otra conversación;
+- actualiza la conversación existente;
+- conserva el mismo `conversation_id`.
+
+Se verificó una conversación real con el cliente:
+
+`Nova Digital Studio`
+
+relacionada correctamente con:
+
+`Mercado Demo`.
+
+### Persistencia automática de mensajes
+
+Cada mensaje entrante recibido por el webhook se guarda automáticamente en:
+
+`whatsapp_messages`
+
+Los mensajes de texto quedan registrados actualmente como:
+
+`direction = incoming`
+
+`message_type = text`
+
+`message_status = received`
+
+Se verificaron correctamente los mensajes reales:
+
+`Prueba mensaje guardado 1`
+
+y:
+
+`Prueba mensaje guardado 2`
+
+Ambos quedaron como registros independientes pero relacionados con el mismo `conversation_id`.
+
+### Protección contra duplicados
+
+Cada mensaje recibido desde Meta incluye un:
+
+`whatsapp_message_id`
+
+único.
+
+Commerce Platform utiliza este identificador para evitar guardar el mismo mensaje más de una vez si Meta reintenta entregar un webhook.
+
+Se verificó mediante consulta SQL que actualmente existen:
+
+`0`
+
+identificadores de mensajes duplicados.
+
+### Flujo actual verificado
+
+El flujo real actualmente funciona así:
+
+`cliente escribe por WhatsApp`
+
+→ `Meta entrega webhook`
+
+→ `Commerce Platform valida firma`
+
+→ `identifica comercio`
+
+→ `identifica cliente`
+
+→ `crea o reutiliza conversación`
+
+→ `guarda mensaje`
+
+→ `evita duplicados`
+
+El siguiente objetivo es completar el sentido contrario:
+
+`Commerce Platform`
+
+→ generar respuesta
+
+→ enviar mediante Meta Cloud API
+
+→ guardar mensaje como `outgoing`
+
+→ continuar la conversación automáticamente.
