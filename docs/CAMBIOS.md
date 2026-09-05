@@ -575,3 +575,52 @@ Fecha: 5 de septiembre de 2026
   - domiciliario.
 
 - El flujo queda preparado para continuar con mejoras de interfaz móvil y futura automatización mediante WhatsApp.
+
+## Versión 0.0.31
+
+Fecha: 5 de septiembre de 2026
+
+- Se reforzó el flujo exclusivo de los domiciliarios para pedidos a domicilio.
+
+- Se eliminó del panel administrativo la acción `Salió a domicilio` para pedidos con:
+  - `fulfillment_type = delivery`;
+  - `status = ready`.
+
+- El administrador continúa pudiendo preparar el pedido y asignar un domiciliario.
+
+- La transición `ready → out_for_delivery` debe realizarse desde el panel del domiciliario mediante `public.driver_pick_up_order()`.
+
+- Se actualizó `public.change_order_status()` para impedir que usuarios administrativos omitan el flujo del domiciliario.
+
+- Para pedidos a domicilio se bloquearon mediante `change_order_status()`:
+  - `ready → out_for_delivery`;
+  - `ready → completed`;
+  - `out_for_delivery → completed`.
+
+- Los intentos de realizar estas transiciones administrativas devuelven:
+
+  `DELIVERY_DRIVER_REQUIRED`
+
+- Se verificó manualmente el bloqueo utilizando la cuenta administrativa.
+
+- Se confirmó que después del intento bloqueado el pedido permaneció correctamente en estado `ready`.
+
+- La consulta de pedidos del administrador ahora incluye las asignaciones de domicilio y el domiciliario relacionado.
+
+- El panel administrativo muestra el nombre del domiciliario actualmente asignado a cada pedido.
+
+- Cuando un pedido tiene una asignación activa se muestra:
+
+  `Domiciliario asignado: [nombre]`
+
+- La interfaz queda preparada para cambiar el domiciliario cuando existan otros domiciliarios disponibles.
+
+- Cuando solo existe un domiciliario disponible se evita mostrar controles de reasignación innecesarios.
+
+- Se mantiene el historial de asignaciones anteriores mediante `delivery_assignments`.
+
+- El flujo de domicilio queda definido como:
+
+  `ready → asignación → recogida por domiciliario → out_for_delivery → entrega/cobro → completed`
+
+- Frontend y backend quedan alineados para impedir que el administrador salte el flujo operativo del domiciliario.

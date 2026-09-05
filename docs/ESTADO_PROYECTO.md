@@ -1039,3 +1039,72 @@ Se verificó un flujo completo real de prueba:
 `pending -> accepted -> preparing -> ready -> asignado -> out_for_delivery -> completed`
 
 El pago contraentrega fue registrado como pagado por el usuario del domiciliario y el pedido desapareció correctamente de sus asignaciones activas.
+
+---
+
+## 38. Blindaje y visualización de asignaciones de domicilio
+
+Se reforzó el flujo operativo de los pedidos a domicilio después de implementar el panel independiente para domiciliarios.
+
+### Salida exclusiva desde el panel del domiciliario
+
+En el panel administrativo se eliminó la acción:
+
+`Salió a domicilio`
+
+para pedidos con:
+
+- `fulfillment_type = delivery`;
+- `status = ready`.
+
+El administrador puede preparar el pedido y asignar un domiciliario, pero la salida debe ser registrada por el propio domiciliario mediante:
+
+`public.driver_pick_up_order()`.
+
+También se actualizó:
+
+`public.change_order_status()`
+
+para impedir desde el backend que un usuario administrativo realice las transiciones reservadas al domiciliario.
+
+Para pedidos a domicilio se bloquean mediante esta función:
+
+- `ready → out_for_delivery`;
+- `ready → completed`;
+- `out_for_delivery → completed`.
+
+Cuando se intenta realizar una de estas operaciones, Supabase devuelve:
+
+`DELIVERY_DRIVER_REQUIRED`
+
+Se verificó manualmente el bloqueo usando un usuario administrativo y se confirmó que el pedido permaneció en estado `ready`.
+
+### Visualización del domiciliario asignado
+
+La consulta de pedidos del administrador ahora incluye:
+
+`delivery_assignments`
+
+y la información relacionada de:
+
+`delivery_drivers`.
+
+Cuando un pedido `ready` ya tiene una asignación activa, el panel muestra:
+
+`Domiciliario asignado: [nombre]`
+
+Esto permite al comercio identificar inmediatamente quién tiene asignado cada pedido.
+
+Si existen otros domiciliarios disponibles, la interfaz queda preparada para permitir cambiar la asignación reutilizando el flujo seguro de reasignación existente.
+
+Cuando solo existe un domiciliario disponible, el sistema muestra únicamente el domiciliario asignado y evita controles innecesarios.
+
+El flujo queda definido de la siguiente manera:
+
+`ready`
+→ administrador asigna domiciliario
+→ domiciliario visualiza el pedido
+→ domiciliario recoge el pedido
+→ `out_for_delivery`
+→ domiciliario entrega/cobra
+→ `completed`

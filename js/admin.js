@@ -906,6 +906,97 @@ function crearSelectorDomiciliario(pedido) {
     }
 
 
+    const asignacionActiva =
+        pedido.delivery_assignments?.find(
+            asignacion =>
+                asignacion.active === true
+        );
+
+
+    const domiciliarioActual =
+        asignacionActiva?.delivery_drivers
+        ?? null;
+
+
+    // ==================================================
+    // YA HAY DOMICILIARIO ASIGNADO
+    // ==================================================
+
+    if (domiciliarioActual) {
+
+        const otrosDomiciliarios =
+            domiciliariosDisponibles.filter(
+                domiciliario =>
+                    domiciliario.id !==
+                    domiciliarioActual.id
+            );
+
+
+        return `
+            <div class="asignacion-domiciliario">
+
+                <p>
+                    🛵 Domiciliario asignado:
+                    <strong>
+                        ${domiciliarioActual.name}
+                    </strong>
+                    ✅
+                </p>
+
+
+                ${
+                    otrosDomiciliarios.length > 0
+
+                        ? `
+                            <label>
+                                Cambiar domiciliario
+
+                                <select
+                                    class="selector-domiciliario"
+                                    data-order-id="${pedido.id}"
+                                >
+
+                                    <option value="">
+                                        Selecciona otro domiciliario
+                                    </option>
+
+                                    ${
+                                        otrosDomiciliarios.map(
+                                            domiciliario => `
+                                                <option
+                                                    value="${domiciliario.id}"
+                                                >
+                                                    ${domiciliario.name}
+                                                </option>
+                                            `
+                                        ).join('')
+                                    }
+
+                                </select>
+
+                            </label>
+
+
+                            <button
+                                class="asignar-domiciliario"
+                                data-order-id="${pedido.id}"
+                            >
+                                Cambiar domiciliario
+                            </button>
+                        `
+
+                        : ''
+                }
+
+            </div>
+        `;
+    }
+
+
+    // ==================================================
+    // TODAVÍA NO HAY DOMICILIARIO ASIGNADO
+    // ==================================================
+
     if (domiciliariosDisponibles.length === 0) {
 
         return `
@@ -1025,27 +1116,25 @@ function crearBotonAccion(pedido) {
 
     else if (pedido.status === 'ready') {
 
-        if (
-            pedido.fulfillment_type === 'delivery'
-        ) {
+    if (
+        pedido.fulfillment_type === 'delivery'
+    ) {
 
-            siguienteEstado =
-                'out_for_delivery';
+        // Los pedidos a domicilio deben ser iniciados
+        // desde el panel del domiciliario.
+        return '';
 
-            texto =
-                'Salió a domicilio';
-
-        }
-
-        else {
-
-            siguienteEstado =
-                'completed';
-
-            texto =
-                'Completar pedido';
-        }
     }
+
+    else {
+
+        siguienteEstado =
+            'completed';
+
+        texto =
+            'Completar pedido';
+    }
+}
 
 
     else if (
@@ -1359,7 +1448,7 @@ async function cargarPedidos() {
         error
     } = await supabase
         .from('orders')
-        .select(`
+.select(`
     id,
     created_at,
     customer_name,
@@ -1372,21 +1461,32 @@ async function cargarPedidos() {
     delivery_fee,
     total,
     payment_method,
-payment_status,
-review_status,
+    payment_status,
+    review_status,
 
     order_items (
-    id,
-    product_id,
-    product_name,
-    quantity,
-    unit_price,
-    line_total,
-    item_status,
-    change_reason,
-    changed_at,
-    replacement_for_item_id
-)
+        id,
+        product_id,
+        product_name,
+        quantity,
+        unit_price,
+        line_total,
+        item_status,
+        change_reason,
+        changed_at,
+        replacement_for_item_id
+    ),
+
+    delivery_assignments (
+        id,
+        driver_id,
+        active,
+
+        delivery_drivers (
+            id,
+            name
+        )
+    )
 `)
         .order(
             'created_at',
