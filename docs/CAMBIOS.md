@@ -435,3 +435,143 @@ Fecha: 4 de septiembre de 2026
 - Se verificó que `order_events` registra correctamente toda la secuencia y la razón `Efectivo contraentrega recibido`.
 - Esta operación queda preparada para ser reutilizada posteriormente desde un panel exclusivo para domiciliarios.
 
+## Versión 0.0.30
+
+Fecha: 5 de septiembre de 2026
+
+- Se creó la infraestructura para gestionar domiciliarios independientes por comercio.
+
+- Se creó la tabla `delivery_drivers`.
+
+- Cada domiciliario se relaciona con:
+  - un comercio;
+  - un usuario independiente de Supabase Auth;
+  - nombre;
+  - teléfono;
+  - estado activo.
+
+- Los domiciliarios no pertenecen a `store_members`, por lo que no reciben permisos administrativos.
+
+- Se implementó RLS para permitir que:
+  - el domiciliario consulte únicamente su propio perfil;
+  - el administrador consulte los domiciliarios pertenecientes a sus comercios.
+
+- Se creó la tabla `delivery_assignments` para relacionar pedidos con domiciliarios.
+
+- Las asignaciones registran:
+  - pedido;
+  - domiciliario;
+  - usuario que realizó la asignación;
+  - fecha de asignación;
+  - fecha de recogida;
+  - fecha de finalización;
+  - estado activo.
+
+- Se agregó una restricción para impedir que un pedido tenga más de una asignación activa simultáneamente.
+
+- Se implementó RLS sobre `delivery_assignments`.
+
+- El administrador puede consultar las asignaciones correspondientes a pedidos de sus comercios.
+
+- Cada domiciliario puede consultar únicamente sus propias asignaciones.
+
+- Se creó `public.assign_delivery_driver()`.
+
+- La función permite al administrador asignar o reasignar un pedido a un domiciliario activo del mismo comercio.
+
+- La asignación solamente puede realizarse cuando:
+  - el pedido es a domicilio;
+  - el pedido se encuentra en estado `ready`;
+  - el usuario pertenece al comercio;
+  - el domiciliario pertenece al mismo comercio y está activo.
+
+- Se integró la asignación de domiciliarios con el panel administrativo.
+
+- Los pedidos a domicilio en estado `ready` muestran un selector de domiciliarios disponibles.
+
+- Se verificó correctamente la primera asignación real de un pedido a `Domiciliario Demo`.
+
+- Se creó `delivery.html` como panel independiente para domiciliarios.
+
+- Se creó `js/delivery.js`.
+
+- El domiciliario puede iniciar sesión utilizando su propia cuenta de Supabase Auth.
+
+- Se valida que la cuenta autenticada corresponda realmente a un domiciliario activo.
+
+- Se creó `public.get_my_delivery_orders()`.
+
+- La función devuelve únicamente los pedidos activos asignados al domiciliario autenticado.
+
+- El domiciliario no recibe acceso general a:
+  - pedidos de otros domiciliarios;
+  - productos;
+  - reportes;
+  - configuración del comercio;
+  - funciones administrativas.
+
+- Se creó `public.driver_pick_up_order()`.
+
+- Un domiciliario puede recoger únicamente un pedido que esté asignado activamente a su usuario.
+
+- La recogida cambia el pedido:
+
+  `ready → out_for_delivery`
+
+- Se registra automáticamente `picked_up_at`.
+
+- El historial registra:
+  - `actor_type = delivery_driver`;
+  - `actor_user_id = auth.uid()`;
+  - razón `Pedido recogido por domiciliario`.
+
+- Se creó `public.driver_complete_delivery()` para pedidos pagados previamente por transferencia.
+
+- Un pedido con transferencia pagada puede ser finalizado por el domiciliario mediante:
+
+  `out_for_delivery → completed`
+
+- Al completar la entrega:
+  - se registra `completed_at`;
+  - la asignación queda inactiva;
+  - se conserva el historial de la asignación;
+  - el evento identifica al domiciliario como responsable.
+
+- Se verificó correctamente el flujo completo de entrega de un pedido pagado por transferencia desde el panel del domiciliario.
+
+- Se creó `public.driver_complete_cash_delivery()`.
+
+- La función permite confirmar en una única operación segura:
+  - recepción del efectivo;
+  - pago del pedido;
+  - entrega al cliente.
+
+- Para pedidos con `cash_on_delivery` se registra:
+  - `payment_status = paid`;
+  - `paid_at`;
+  - `payment_verified_by = auth.uid()`;
+  - `status = completed`;
+  - `completed_at`;
+  - asignación inactiva.
+
+- El evento de entrega contraentrega registra:
+  - `actor_type = delivery_driver`;
+  - usuario autenticado del domiciliario;
+  - razón `Efectivo recibido y pedido entregado por domiciliario`.
+
+- Se verificó un flujo real completo de efectivo contraentrega:
+
+  `pending → accepted → preparing → ready → asignado → out_for_delivery → completed`
+
+- Se verificó que el pago fue registrado por el usuario del domiciliario.
+
+- Se verificó que al finalizar una entrega el pedido desaparece automáticamente de las asignaciones activas del domiciliario.
+
+- Se verificaron `picked_up_at`, `completed_at`, `paid_at`, `payment_verified_by` y el historial en `order_events`.
+
+- Commerce Platform ya cuenta con separación funcional entre:
+  - cliente;
+  - administrador del comercio;
+  - domiciliario.
+
+- El flujo queda preparado para continuar con mejoras de interfaz móvil y futura automatización mediante WhatsApp.

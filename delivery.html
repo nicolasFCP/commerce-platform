@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Panel de domicilios
+    </title>
+
+</head>
+
+
+<body>
+
+    <main>
+
+        <section id="login-section">
+
+            <h1>
+                Panel de domicilios
+            </h1>
+
+            <p>
+                Ingresa con tu cuenta de domiciliario.
+            </p>
+
+
+            <form id="delivery-login-form">
+
+                <label>
+
+                    Correo
+
+                    <input
+                        id="delivery-email"
+                        type="email"
+                        required
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Contraseña
+
+                    <input
+                        id="delivery-password"
+                        type="password"
+                        required
+                    >
+
+                </label>
+
+
+                <button
+                    id="delivery-login-button"
+                    type="submit"
+                >
+                    Iniciar sesión
+                </button>
+
+            </form>
+
+
+            <p id="delivery-login-message"></p>
+
+        </section>
+
+
+        <section
+            id="delivery-panel"
+            style="display: none;"
+        >
+
+            <h2>
+                Mis pedidos
+            </h2>
+
+
+            <p id="delivery-driver-name"></p>
+
+
+            <p id="delivery-orders-status">
+                Cargando pedidos...
+            </p>
+
+
+            <div id="delivery-orders-list"></div>
+
+        </section>
+
+    </main>
+
+
+    <script
+        type="module"
+        src="./js/delivery.js"
+    ></script>
+
+</body>
+
+</html>

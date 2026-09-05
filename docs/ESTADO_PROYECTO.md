@@ -908,3 +908,134 @@ El último evento quedó registrado con la razón:
 
 Esta operación queda preparada para ser reutilizada posteriormente desde un panel exclusivo para domiciliarios.
 
+---
+
+## 37. Panel independiente para domiciliarios
+
+Commerce Platform cuenta con un panel independiente para domiciliarios:
+
+`delivery.html`
+
+El domiciliario utiliza una cuenta propia de Supabase Auth y no pertenece a `store_members`, por lo que no obtiene permisos administrativos.
+
+Los domiciliarios se almacenan en:
+
+`delivery_drivers`
+
+Cada registro relaciona:
+
+- comercio;
+- usuario de Supabase Auth;
+- nombre;
+- teléfono;
+- estado activo.
+
+Las asignaciones de pedidos se almacenan en:
+
+`delivery_assignments`
+
+Una asignación registra:
+
+- pedido;
+- domiciliario;
+- usuario que realizó la asignación;
+- fecha de asignación;
+- fecha de recogida;
+- fecha de finalización;
+- estado activo.
+
+Solo puede existir una asignación activa por pedido.
+
+El administrador puede asignar un pedido a domicilio que se encuentre en estado:
+
+`ready`
+
+mediante:
+
+`public.assign_delivery_driver()`
+
+La función valida:
+
+- que el pedido exista;
+- que sea un pedido a domicilio;
+- que esté listo;
+- que quien asigna pertenezca al comercio;
+- que el domiciliario esté activo;
+- que pertenezca al mismo comercio.
+
+El domiciliario consulta únicamente sus pedidos activos mediante:
+
+`public.get_my_delivery_orders()`
+
+El panel no le proporciona acceso general a pedidos, productos, reportes ni configuración del comercio.
+
+### Recogida del pedido
+
+Cuando un pedido asignado está:
+
+`ready`
+
+el domiciliario puede ejecutar:
+
+`public.driver_pick_up_order()`
+
+Esto realiza:
+
+`ready -> out_for_delivery`
+
+y registra:
+
+- `picked_up_at`;
+- `actor_type = delivery_driver`;
+- `actor_user_id = auth.uid()`;
+- evento en `order_events`.
+
+### Entrega de pedidos pagados por transferencia
+
+Para pedidos:
+
+- `payment_method = transfer`;
+- `payment_status = paid`;
+- `status = out_for_delivery`;
+
+el domiciliario puede ejecutar:
+
+`public.driver_complete_delivery()`
+
+Esto realiza:
+
+`out_for_delivery -> completed`
+
+y además:
+
+- registra `completed_at`;
+- desactiva la asignación;
+- registra al domiciliario como actor en `order_events`.
+
+### Entrega con efectivo contraentrega
+
+Para pedidos:
+
+- `payment_method = cash_on_delivery`;
+- `payment_status = pending`;
+- `status = out_for_delivery`;
+
+el domiciliario puede ejecutar:
+
+`public.driver_complete_cash_delivery()`
+
+En una misma operación registra:
+
+- `payment_status = paid`;
+- `paid_at`;
+- `payment_verified_by = auth.uid()`;
+- `status = completed`;
+- `completed_at`;
+- asignación inactiva;
+- evento con `actor_type = delivery_driver`.
+
+Se verificó un flujo completo real de prueba:
+
+`pending -> accepted -> preparing -> ready -> asignado -> out_for_delivery -> completed`
+
+El pago contraentrega fue registrado como pagado por el usuario del domiciliario y el pedido desapareció correctamente de sus asignaciones activas.

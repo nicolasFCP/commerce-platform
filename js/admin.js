@@ -129,6 +129,8 @@ let productosParaReemplazo = [];
 
 let paymentSettingsActual = null;
 
+let domiciliariosDisponibles = [];
+
 const transferEnabled = document.querySelector(
     '#transfer-enabled'
 );
@@ -239,7 +241,10 @@ async function iniciarSesion(event) {
 
     await cargarProductos();
 
+    await cargarDomiciliarios();
+
 await cargarPedidos();
+
 
 await cargarCategorias();
 
@@ -886,6 +891,75 @@ function crearAccionPago(pedido) {
 }
 
 // ======================================================
+// SELECTOR DE DOMICILIARIO
+// ======================================================
+
+function crearSelectorDomiciliario(pedido) {
+
+    if (
+        pedido.status !== 'ready'
+        ||
+        pedido.fulfillment_type !== 'delivery'
+    ) {
+
+        return '';
+    }
+
+
+    if (domiciliariosDisponibles.length === 0) {
+
+        return `
+            <div class="asignacion-domiciliario">
+                No hay domiciliarios disponibles.
+            </div>
+        `;
+    }
+
+
+    return `
+        <div class="asignacion-domiciliario">
+
+            <label>
+                Asignar domiciliario
+
+                <select
+                    class="selector-domiciliario"
+                    data-order-id="${pedido.id}"
+                >
+
+                    <option value="">
+                        Selecciona un domiciliario
+                    </option>
+
+                    ${
+                        domiciliariosDisponibles.map(
+                            domiciliario => `
+                                <option
+                                    value="${domiciliario.id}"
+                                >
+                                    ${domiciliario.name}
+                                </option>
+                            `
+                        ).join('')
+                    }
+
+                </select>
+
+            </label>
+
+
+            <button
+                class="asignar-domiciliario"
+                data-order-id="${pedido.id}"
+            >
+                Asignar pedido
+            </button>
+
+        </div>
+    `;
+}
+
+// ======================================================
 // BOTÓN SEGÚN EL ESTADO DEL PEDIDO
 // ======================================================
 
@@ -1223,6 +1297,52 @@ function crearBotonWhatsApp(pedido) {
 }
 
 // ======================================================
+// CARGAR DOMICILIARIOS
+// ======================================================
+
+async function cargarDomiciliarios() {
+
+    const {
+        data: domiciliarios,
+        error
+    } = await supabase
+        .from('delivery_drivers')
+        .select(`
+            id,
+            name,
+            phone,
+            active
+        `)
+        .eq(
+            'active',
+            true
+        )
+        .order(
+            'name',
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            'Error cargando domiciliarios:',
+            error
+        );
+
+        domiciliariosDisponibles = [];
+
+        return;
+    }
+
+
+    domiciliariosDisponibles =
+        domiciliarios ?? [];
+}
+
+// ======================================================
 // CARGAR PEDIDOS
 // ======================================================
 
@@ -1497,6 +1617,8 @@ ${crearSelectorReemplazo(
                     </div>
 
                     ${crearAccionPago(pedido)}
+
+                    ${crearSelectorDomiciliario(pedido)}
                     
                     ${crearBotonAccion(pedido)}
 
@@ -1677,6 +1799,129 @@ listaPedidos.addEventListener(
 
             return;
         }
+
+
+        await cargarPedidos();
+
+    }
+);
+
+// ======================================================
+// ASIGNAR DOMICILIARIO A PEDIDO
+// ======================================================
+
+listaPedidos.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.asignar-domiciliario'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const contenedor =
+            boton.closest(
+                '.asignacion-domiciliario'
+            );
+
+
+        const selector =
+            contenedor.querySelector(
+                '.selector-domiciliario'
+            );
+
+
+        const orderId =
+            boton.dataset.orderId;
+
+
+        const driverId =
+            selector.value;
+
+
+        if (!driverId) {
+
+            alert(
+                'Selecciona primero un domiciliario.'
+            );
+
+            return;
+        }
+
+
+        const domiciliario =
+            domiciliariosDisponibles.find(
+                item =>
+                    item.id === driverId
+            );
+
+
+        const confirmar =
+            window.confirm(
+                `¿Asignar este pedido a ${
+                    domiciliario?.name
+                    ?? 'este domiciliario'
+                }?`
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        boton.disabled = true;
+
+        selector.disabled = true;
+
+        boton.textContent =
+            'Asignando...';
+
+
+        const {
+            error
+        } = await supabase.rpc(
+            'assign_delivery_driver',
+            {
+                p_order_id: orderId,
+                p_driver_id: driverId
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error asignando domiciliario:',
+                error
+            );
+
+
+            alert(
+                'No se pudo asignar el domiciliario.'
+            );
+
+
+            boton.disabled = false;
+
+            selector.disabled = false;
+
+            boton.textContent =
+                'Asignar pedido';
+
+            return;
+        }
+
+
+        alert(
+            'Domiciliario asignado correctamente ✅'
+        );
 
 
         await cargarPedidos();
