@@ -913,3 +913,93 @@ Fecha: 5 de septiembre de 2026
 - Flujo funcional actual:
 
   `cliente → WhatsApp → Meta → webhook → identificar comercio/cliente → guardar incoming → responder → Meta → cliente → guardar outgoing`
+
+### Version 0.0.36 — Menú útil de WhatsApp, consulta de pedidos y atención humana
+
+- Se completó el PASO 3.19 del flujo conversacional básico por WhatsApp.
+- La respuesta automática fija fue reemplazada por un menú inicial:
+
+  1. Ver productos
+  2. Consultar mi pedido
+  3. Hablar con la tienda
+
+- Se verificó el menú con mensajes reales enviados desde WhatsApp.
+
+- La opción `1` permite al cliente acceder al catálogo público de Commerce Platform.
+- Se verificó que el enlace abre correctamente el catálogo de Mercado Demo y carga productos reales desde Supabase.
+
+- La opción `2` permite consultar el estado de un pedido real.
+- El cliente puede enviar un código con formato:
+
+  `CP-XXXXXXXX`
+
+- El código público del pedido continúa utilizando la misma lógica existente:
+
+  `CP-` + primeros 8 caracteres del UUID del pedido en mayúsculas.
+
+- La consulta del pedido valida:
+  - que pertenezca al comercio que recibió el WhatsApp;
+  - que el número telefónico del pedido corresponda al cliente que está escribiendo.
+
+- Se agregó traducción de estados internos a mensajes legibles para el cliente.
+- Se probó con el pedido real:
+
+  `CP-488B5BE0`
+
+- Commerce Platform respondió correctamente:
+
+  `Estado: Aceptado ✅`
+
+- Durante la implementación se detectó que `service_role` no tenía permiso de lectura sobre `public.orders`.
+- Se aplicó:
+
+  `grant select on public.orders to service_role;`
+
+- El permiso quedó documentado en:
+
+  `sql/060_orders_service_role_select.sql`
+
+- Se creó:
+
+  `sql/059_whatsapp_human_handoff.sql`
+
+- `whatsapp_conversations` ahora incluye:
+  - `human_handoff_requested`;
+  - `human_handoff_requested_at`;
+  - `human_handoff_resolved_at`.
+
+- La opción `3` activa una solicitud real de atención humana.
+- Cuando el cliente solicita hablar con la tienda:
+  - la conversación queda marcada con `human_handoff_requested = true`;
+  - se registra la fecha de solicitud;
+  - el cliente recibe una única confirmación;
+  - los mensajes siguientes continúan almacenándose como `incoming`;
+  - el bot deja de responder automáticamente.
+
+- Se verificó en PostgreSQL que el mensaje:
+
+  `Necesito ayuda con mi pedido`
+
+  quedó guardado con:
+
+  `direction = incoming`
+
+  y:
+
+  `message_status = received`
+
+  sin generar posteriormente un mensaje `outgoing`.
+
+- Durante la prueba del handoff se detectó y corrigió un error de alcance de la variable:
+
+  `ReferenceError: automaticReply is not defined`
+
+- `automaticReply` ahora se calcula antes de evaluar si corresponde realizar el envío a Meta.
+
+- Flujo conversacional funcional actual:
+
+  `cliente → WhatsApp → menú → catálogo / consulta de pedido / atención humana`
+
+- Flujo de atención humana validado:
+
+  `cliente solicita atención → conversación marcada → confirmación → mensajes continúan guardándose → bot permanece en silencio`

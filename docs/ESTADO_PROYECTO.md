@@ -33,7 +33,7 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.18 — Respuestas automáticas de WhatsApp y persistencia de mensajes salientes funcionando.
+PASO 3.19 — Menú operativo de WhatsApp, consulta de pedidos y transferencia a atención humana funcionando.
 
 Completado:
 
@@ -43,32 +43,50 @@ PASO 3.17 — Conversaciones y mensajes entrantes de WhatsApp almacenados en Pos
 
 PASO 3.18 — Respuesta automática real por WhatsApp y almacenamiento de mensajes salientes.
 
+PASO 3.19 — Menú conversacional, consulta segura de pedidos y handoff a atención humana.
+
 Actualmente Commerce Platform puede:
 
 - recibir mensajes reales desde WhatsApp;
-- validar que los eventos procedan de Meta;
-- identificar automáticamente a qué comercio pertenece el número receptor;
-- identificar al cliente que escribió;
-- crear o reutilizar una conversación;
-- guardar cada mensaje recibido como `incoming`;
+- validar los eventos enviados por Meta;
+- identificar automáticamente el comercio receptor;
+- identificar al cliente;
+- crear o reutilizar conversaciones;
+- guardar mensajes `incoming`;
+- enviar y almacenar mensajes `outgoing`;
 - evitar duplicados mediante `whatsapp_message_id`;
-- responder automáticamente al cliente por WhatsApp;
-- guardar cada respuesta enviada como `outgoing`;
-- almacenar el `whatsapp_message_id` real generado por Meta;
-- mantener aislamiento multi-comercio;
-- utilizar un token backend de usuario del sistema de Meta sin depender de tokens temporales.
+- mostrar un menú automático al cliente;
+- enviar al cliente al catálogo público;
+- consultar pedidos reales mediante códigos `CP-XXXXXXXX`;
+- validar que el pedido pertenezca al comercio correcto;
+- validar que el pedido pertenezca al número telefónico que consulta;
+- devolver al cliente el estado actual del pedido;
+- permitir que el cliente solicite hablar con la tienda;
+- marcar una conversación para atención humana;
+- continuar almacenando mensajes durante la atención humana;
+- suspender las respuestas automáticas mientras exista un handoff activo;
+- mantener aislamiento multi-comercio.
 
 Flujo funcional actual:
 
-`cliente → WhatsApp → Meta → webhook → identificar comercio/cliente → conversación → guardar incoming → generar respuesta → Meta → cliente → guardar outgoing`
+`cliente → WhatsApp → webhook → conversación → guardar incoming → menú → catálogo / pedido / atención humana`
+
+Flujo de consulta:
+
+`CP-XXXXXXXX → identificar comercio → localizar pedido → validar teléfono → devolver estado`
+
+Flujo de atención humana:
+
+`opción 3 → marcar conversación → confirmar al cliente → guardar mensajes posteriores → bot en silencio`
 
 Siguiente objetivo:
 
-Convertir la respuesta automática fija de prueba en una respuesta útil para la operación real del comercio, aprovechando el flujo bidireccional que ya funciona.
+PASO 3.20 — Hacer visible en el panel del comercio qué conversaciones requieren atención humana y permitir resolver el handoff para reactivar posteriormente la automatización.
 
-La prioridad continúa siendo completar únicamente las funciones necesarias para tener un MVP demostrable y vendible.
+La prioridad continúa siendo cerrar únicamente las funciones necesarias para una demo comercial y un primer comercio piloto.
 
 ---
+
 # Completado
 
 ## 1. Base de datos inicial
@@ -1627,3 +1645,129 @@ Con esto quedó validado el flujo:
 `mensaje entrante → persistencia → respuesta automática → envío real por Meta → persistencia del mensaje saliente`
 
 Commerce Platform ya dispone de comunicación bidireccional básica y persistente por WhatsApp.
+
+## 43. Menú conversacional, consulta de pedidos y atención humana por WhatsApp
+
+Se completó el primer flujo conversacional operativo de Commerce Platform sobre WhatsApp.
+
+El webhook ya no responde únicamente con un mensaje fijo.
+
+Ahora presenta al cliente:
+
+1. Ver productos
+2. Consultar mi pedido
+3. Hablar con la tienda
+
+### Ver productos
+
+Cuando el cliente responde:
+
+`1`
+
+Commerce Platform envía el enlace del catálogo público.
+
+La prueba real confirmó que el catálogo de Mercado Demo abre correctamente y carga productos desde Supabase.
+
+### Consultar pedido
+
+Cuando el cliente responde:
+
+`2`
+
+Commerce Platform solicita el número del pedido.
+
+Los códigos públicos mantienen el formato existente:
+
+`CP-XXXXXXXX`
+
+donde `XXXXXXXX` corresponde a los primeros ocho caracteres del UUID del pedido.
+
+Para consultar un pedido, el backend valida:
+
+- `store_id` del comercio receptor;
+- prefijo del UUID recibido;
+- teléfono del cliente almacenado en el pedido;
+- teléfono del cliente que está escribiendo por WhatsApp.
+
+Durante la implementación fue necesario otorgar permiso de lectura a `service_role` sobre:
+
+`public.orders`
+
+El cambio quedó documentado en:
+
+`sql/060_orders_service_role_select.sql`
+
+con:
+
+`grant select on public.orders to service_role;`
+
+Se realizó una prueba real con:
+
+`CP-488B5BE0`
+
+El pedido fue encontrado correctamente y Commerce Platform respondió:
+
+`Estado: Aceptado ✅`
+
+### Atención humana
+
+Se creó:
+
+`sql/059_whatsapp_human_handoff.sql`
+
+que agrega a:
+
+`public.whatsapp_conversations`
+
+las columnas:
+
+- `human_handoff_requested`;
+- `human_handoff_requested_at`;
+- `human_handoff_resolved_at`.
+
+Cuando el cliente responde:
+
+`3`
+
+Commerce Platform marca la conversación para atención humana.
+
+La prueba real confirmó:
+
+`human_handoff_requested = true`
+
+y registró correctamente:
+
+`human_handoff_requested_at`
+
+Mientras una conversación permanece en atención humana:
+
+- los mensajes nuevos siguen llegando al webhook;
+- siguen almacenándose en `whatsapp_messages`;
+- continúan registrándose como `incoming`;
+- el bot omite las respuestas automáticas.
+
+Se probó enviando:
+
+`Necesito ayuda con mi pedido`
+
+La base de datos confirmó:
+
+- `direction = incoming`;
+- `message_status = received`;
+
+sin crear un mensaje `outgoing` posterior.
+
+Durante la implementación se detectó el error:
+
+`ReferenceError: automaticReply is not defined`
+
+La causa era que se evaluaba `automaticReply` antes de declarar y calcular la variable.
+
+La lógica fue corregida para:
+
+1. procesar el mensaje;
+2. calcular la respuesta correspondiente;
+3. determinar si existe una respuesta automática;
+4. enviar a Meta únicamente cuando corresponda.
+
+Con esto Commerce Platform ya puede mantener una conversación básica útil con un cliente y transferirla de forma controlada desde automatización hacia atención humana.

@@ -524,6 +524,10 @@ let conversationId =
     null;
 
 
+let humanHandoffRequested =
+    false;
+
+
 if (
     whatsappSettings
     &&
@@ -567,8 +571,8 @@ if (
             }
         )
         .select(
-            "id"
-        )
+    "id,human_handoff_requested"
+)
         .single();
 
 
@@ -592,6 +596,10 @@ if (
 
     conversationId =
         conversation.id;
+
+    humanHandoffRequested =
+    conversation.human_handoff_requested
+    ?? false;    
 
 
     console.log(
@@ -710,6 +718,228 @@ if (
 // ENVIAR RESPUESTA AUTOMÁTICA
 // ==================================
 
+
+
+    const normalizedText =
+    (text ?? "")
+        .trim()
+        .toLowerCase();
+
+
+let automaticReply: string | null =
+    null;
+
+if (humanHandoffRequested) {
+
+    console.log(
+        "Respuesta automática omitida: conversación en atención humana",
+        conversationId
+    );
+
+
+} else if (normalizedText === "1") {
+
+
+    automaticReply =
+        "🛒 Puedes ver nuestros productos aquí:\n\n" +
+        "https://nicolasfcp.github.io/commerce-platform/demo.html";
+
+
+} else if (normalizedText === "2") {
+
+    automaticReply =
+        "📦 Claro. Envíame el número de tu pedido para consultarlo.\n\n" +
+        "Ejemplo: CP-12345678";
+
+
+} else if (
+    /^cp-[0-9a-f]{8}$/i.test(
+        normalizedText
+    )
+) {
+
+    const orderPrefix =
+        normalizedText
+            .substring(3)
+            .toLowerCase();
+
+
+    const lowerOrderId =
+        `${orderPrefix}-0000-0000-0000-000000000000`;
+
+
+    const upperOrderId =
+        `${orderPrefix}-ffff-ffff-ffff-ffffffffffff`;
+
+
+    const {
+        data: candidateOrders,
+        error: orderLookupError
+    } = await supabaseAdmin
+        .from("orders")
+        .select(`
+            id,
+            customer_phone,
+            status,
+            fulfillment_type
+        `)
+        .eq(
+            "store_id",
+            whatsappSettings.store_id
+        )
+        .gte(
+            "id",
+            lowerOrderId
+        )
+        .lte(
+            "id",
+            upperOrderId
+        )
+        .limit(10);
+
+
+    if (orderLookupError) {
+
+        console.error(
+            "Error consultando pedido por WhatsApp:",
+            orderLookupError
+        );
+
+
+        automaticReply =
+            "⚠️ No pude consultar tu pedido en este momento. Intenta nuevamente.";
+
+    } else {
+
+        const normalizePhone =
+            (phone: string | null) =>
+                (phone ?? "")
+                    .replace(/\D/g, "")
+                    .slice(-10);
+
+
+        const customerOrder =
+            (candidateOrders ?? [])
+                .find(
+                    order =>
+                        normalizePhone(
+                            order.customer_phone
+                        )
+                        ===
+                        normalizePhone(
+                            senderPhone
+                        )
+                );
+
+
+        if (!customerOrder) {
+
+            automaticReply =
+                "🔎 No encontré ese pedido asociado a este número de WhatsApp.\n\n" +
+                "Revisa el número e inténtalo nuevamente.";
+
+        } else {
+
+            const statusLabels: Record<string, string> = {
+                pending: "Pendiente",
+                accepted: "Aceptado ✅",
+                preparing: "En preparación 👨‍🍳",
+                ready: "Listo para entregar 📦",
+                out_for_delivery: "En camino 🛵",
+                completed: "Entregado ✅",
+                cancelled: "Cancelado"
+            };
+
+
+            const orderNumber =
+                `CP-${
+                    customerOrder.id
+                        .slice(0, 8)
+                        .toUpperCase()
+                }`;
+
+
+            const statusLabel =
+                statusLabels[
+                    customerOrder.status
+                ]
+                ??
+                customerOrder.status;
+
+
+            automaticReply =
+                `📦 Pedido ${orderNumber}\n\n` +
+                `Estado: ${statusLabel}`;
+
+        }
+
+    }
+
+} else if (normalizedText === "3") {
+
+    const handoffNow =
+        new Date().toISOString();
+
+
+    const {
+        error: handoffError
+    } = await supabaseAdmin
+        .from(
+            "whatsapp_conversations"
+        )
+        .update({
+            human_handoff_requested:
+                true,
+
+            human_handoff_requested_at:
+                handoffNow,
+
+            human_handoff_resolved_at:
+                null,
+
+            updated_at:
+                handoffNow
+        })
+        .eq(
+            "id",
+            conversationId
+        );
+
+
+    if (handoffError) {
+
+        console.error(
+            "Error activando atención humana:",
+            handoffError
+        );
+
+
+        automaticReply =
+            "⚠️ No pude solicitar atención de la tienda en este momento.";
+
+    } else {
+
+        humanHandoffRequested =
+            true;
+
+
+        automaticReply =
+            "👤 Perfecto. La tienda continuará atendiendo tu conversación.";
+
+    }
+
+} else {
+
+    automaticReply =
+        "¡Hola! 👋 Bienvenido.\n\n" +
+        "¿En qué podemos ayudarte?\n\n" +
+        "1. 🛒 Ver productos\n" +
+        "2. 📦 Consultar mi pedido\n" +
+        "3. 👤 Hablar con la tienda\n\n" +
+        "Responde con 1, 2 o 3.";
+
+}
+
 if (
     whatsappSettings
     &&
@@ -722,11 +952,9 @@ if (
     senderPhone
     &&
     messageType === "text"
+    &&
+    automaticReply
 ) {
-
-    const automaticReply =
-        "¡Hola! 👋 Commerce Platform recibió tu mensaje correctamente.";
-
 
     const metaResponse =
         await fetch(
