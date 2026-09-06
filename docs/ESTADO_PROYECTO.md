@@ -33,64 +33,36 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.20 — Atención humana de WhatsApp integrada completamente al panel administrativo.
+PASO 3.21 — Navegación por categorías del catálogo público funcionando.
 
 Completado:
 
-PASO 3.16 — Webhook seguro de WhatsApp, identificación por comercio y recepción de mensajes reales.
+PASO 3.19 — Menú de WhatsApp, consulta de pedidos y transferencia a atención humana.
 
-PASO 3.17 — Conversaciones y mensajes entrantes almacenados en PostgreSQL.
+PASO 3.20 — Atención humana de WhatsApp integrada al panel administrativo.
 
-PASO 3.18 — Respuestas automáticas reales por WhatsApp y almacenamiento de mensajes salientes.
+PASO 3.21 — Categorías dinámicas y filtrado de productos en el catálogo público.
 
-PASO 3.19 — Menú conversacional, consulta segura de pedidos y transferencia a atención humana.
+Actualmente el catálogo del cliente puede:
 
-PASO 3.20 — Gestión de atención humana directamente desde el panel del comercio.
-
-Actualmente Commerce Platform puede:
-
-- recibir mensajes reales desde WhatsApp;
-- identificar automáticamente comercio y cliente;
-- almacenar conversaciones y mensajes;
-- responder automáticamente;
-- mostrar un menú de opciones;
-- enviar al cliente al catálogo;
-- consultar pedidos mediante códigos `CP-XXXXXXXX`;
-- validar pedido, comercio y teléfono;
-- permitir que el cliente solicite hablar con la tienda;
-- suspender la automatización durante la atención humana;
-- mostrar conversaciones pendientes dentro del panel administrativo;
-- mostrar los últimos mensajes de cada conversación;
-- diferenciar mensajes del cliente y de la tienda;
-- permitir que la tienda escriba y envíe respuestas desde el panel;
-- enviar esas respuestas mediante WhatsApp Cloud API;
-- almacenar las respuestas humanas como `outgoing`;
-- finalizar la atención humana mediante una RPC segura;
-- volver a enviar automáticamente el menú al cliente;
-- reactivar posteriormente la automatización;
-- mantener aislamiento multi-comercio mediante RLS.
-
-Flujo actual de atención humana:
-
-`cliente → opción 3 → conversación pendiente → panel del comercio → respuesta humana → WhatsApp`
-
-Flujo de finalización:
-
-`Finalizar atención → enviar menú → confirmar Meta → resolver handoff → bot nuevamente activo`
+- cargar categorías reales desde Supabase;
+- mostrar únicamente categorías activas que tengan productos disponibles;
+- mostrar una opción `Todos`;
+- filtrar productos sin recargar la página;
+- mantener visible la categoría seleccionada;
+- permitir navegación horizontal en celular;
+- conservar carrito, cantidades y total al cambiar de categoría.
 
 Siguiente objetivo:
-
-PASO 3.21 — Organizar el catálogo público del cliente mediante navegación por categorías para mejorar la presentación del piloto comercial.
-
-Después:
 
 PASO 3.22 — Alta rápida de un comercio nuevo y prueba completa con un segundo comercio aislado.
 
 Objetivo inmediato:
 
-tener una versión suficientemente organizada, sencilla y estable para demostrarla y comenzar un primer comercio piloto sin requerir operaciones técnicas complejas.
+comprobar que un nuevo cliente pueda pasar de “acaba de comprar Commerce Platform” a “tienda funcionando” sin repetir manualmente todo el proceso técnico realizado con Mercado Demo.
 
 ---
+
 
 # Completado
 
@@ -1897,3 +1869,42 @@ La prueba real confirmó:
 - automatización nuevamente activa.
 
 Con este paso, un comercio puede administrar una solicitud humana sin abandonar Commerce Platform.
+
+## 45. Navegación por categorías del catálogo público
+
+Se completó la organización del catálogo del cliente mediante categorías.
+
+`cargarCatalogo()` ya obtenía desde Supabase:
+
+- categorías;
+- productos;
+- relación mediante `category_id`.
+
+No fue necesario cambiar la estructura de datos.
+
+La función `mostrarCatalogo()` fue ampliada para generar una navegación dinámica con:
+
+`Todos`
+
+más todas las categorías activas que contengan productos disponibles.
+
+Al seleccionar una categoría, Commerce Platform filtra localmente los productos y actualiza el catálogo sin realizar una recarga completa.
+
+La categoría seleccionada se identifica visualmente.
+
+La navegación utiliza desplazamiento horizontal para facilitar su uso desde celular.
+
+Se verificó además que el filtrado no afecta el carrito.
+
+Prueba realizada:
+
+`Bebidas → agregar Agua 600ml → volver a Todos`
+
+Resultado:
+
+- producto conservado;
+- cantidad conservada;
+- total `$ 2.500`;
+- flujo de pedido intacto.
+
+Con este paso el catálogo tiene una estructura más apropiada para presentar Commerce Platform a un comercio piloto.

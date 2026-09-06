@@ -140,57 +140,248 @@ function mostrarCatalogo(categories, products) {
     catalogo.innerHTML = '';
 
 
-    categories.forEach(category => {
+    // ==================================================
+    // SOLO CATEGORÍAS QUE TIENEN PRODUCTOS
+    // ==================================================
 
-        const productosCategoria = products.filter(
-            product => product.category_id === category.id
+    const categoriasConProductos =
+        categories.filter(
+            category =>
+                products.some(
+                    product =>
+                        product.category_id === category.id
+                )
         );
 
 
-        if (productosCategoria.length === 0) {
-            return;
+    // ==================================================
+    // NAVEGACIÓN DE CATEGORÍAS
+    // ==================================================
+
+    const navegacion =
+        document.createElement('div');
+
+
+    navegacion.className =
+        'categorias-navegacion';
+
+
+    const botonTodos =
+        document.createElement('button');
+
+
+    botonTodos.type = 'button';
+
+    botonTodos.className =
+        'categoria-filtro activa';
+
+    botonTodos.textContent =
+        '🛒 Todos';
+
+    botonTodos.dataset.categoryId =
+        'todos';
+
+
+    navegacion.appendChild(
+        botonTodos
+    );
+
+
+    categoriasConProductos.forEach(
+        category => {
+
+            const boton =
+                document.createElement(
+                    'button'
+                );
+
+
+            boton.type =
+                'button';
+
+
+            boton.className =
+                'categoria-filtro';
+
+
+            boton.dataset.categoryId =
+                category.id;
+
+
+            boton.textContent =
+                category.name;
+
+
+            navegacion.appendChild(
+                boton
+            );
         }
+    );
 
 
-        const section = document.createElement('section');
-
-        section.classList.add('categoria');
-
-
-        section.innerHTML = `
-            <h2>${category.name}</h2>
-
-            <div class="productos">
-
-                ${productosCategoria.map(product => `
-
-                    <article class="producto">
-
-                        <h3>${product.name}</h3>
-
-                        <div class="precio">
-                            ${formatearPrecio(product.price)}
-                        </div>
-
-                        <button
-                            class="agregar"
-                            data-product-id="${product.id}"
-                        >
-                            Agregar
-                        </button>
-
-                    </article>
-
-                `).join('')}
-
-            </div>
-        `;
+    catalogo.appendChild(
+        navegacion
+    );
 
 
-        catalogo.appendChild(section);
-    });
+    // ==================================================
+    // CONTENEDOR DE PRODUCTOS
+    // ==================================================
+
+    const contenido =
+        document.createElement('div');
+
+
+    contenido.className =
+        'catalogo-contenido';
+
+
+    catalogo.appendChild(
+        contenido
+    );
+
+
+    // ==================================================
+    // RENDERIZAR PRODUCTOS
+    // ==================================================
+
+    function renderizarCategoria(
+        categoryId = 'todos'
+    ) {
+
+        contenido.innerHTML = '';
+
+
+        const categoriasAMostrar =
+            categoryId === 'todos'
+                ? categoriasConProductos
+                : categoriasConProductos.filter(
+                    category =>
+                        category.id === categoryId
+                );
+
+
+        categoriasAMostrar.forEach(
+            category => {
+
+                const productosCategoria =
+                    products.filter(
+                        product =>
+                            product.category_id ===
+                            category.id
+                    );
+
+
+                if (
+                    productosCategoria.length === 0
+                ) {
+                    return;
+                }
+
+
+                const section =
+                    document.createElement(
+                        'section'
+                    );
+
+
+                section.classList.add(
+                    'categoria'
+                );
+
+
+                section.innerHTML = `
+                    <h2>${category.name}</h2>
+
+                    <div class="productos">
+
+                        ${productosCategoria
+                            .map(
+                                product => `
+
+                                    <article class="producto">
+
+                                        <h3>
+                                            ${product.name}
+                                        </h3>
+
+                                        <div class="precio">
+                                            ${formatearPrecio(
+                                                product.price
+                                            )}
+                                        </div>
+
+                                        <button
+                                            class="agregar"
+                                            data-product-id="${product.id}"
+                                        >
+                                            Agregar
+                                        </button>
+
+                                    </article>
+
+                                `
+                            )
+                            .join('')}
+
+                    </div>
+                `;
+
+
+                contenido.appendChild(
+                    section
+                );
+            }
+        );
+    }
+
+
+    // ==================================================
+    // CAMBIAR CATEGORÍA
+    // ==================================================
+
+    navegacion.addEventListener(
+        'click',
+        event => {
+
+            const boton =
+                event.target.closest(
+                    '.categoria-filtro'
+                );
+
+
+            if (!boton) {
+                return;
+            }
+
+
+            navegacion
+                .querySelectorAll(
+                    '.categoria-filtro'
+                )
+                .forEach(
+                    item =>
+                        item.classList.remove(
+                            'activa'
+                        )
+                );
+
+
+            boton.classList.add(
+                'activa'
+            );
+
+
+            renderizarCategoria(
+                boton.dataset.categoryId
+            );
+        }
+    );
+
+
+    // Mostrar todo inicialmente
+    renderizarCategoria('todos');
 }
-
 
 /* =====================================================
    AGREGAR PRODUCTO

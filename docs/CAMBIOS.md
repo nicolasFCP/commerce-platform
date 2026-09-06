@@ -1103,3 +1103,45 @@ Fecha: 5 de septiembre de 2026
 - Flujo funcional final:
 
   `cliente solicita persona → panel del comercio → historial → respuesta humana → WhatsApp → finalizar atención → menú automático → bot reactivado`
+
+  ### Version 0.0.38 — Navegación por categorías en el catálogo público
+
+- Se completó el PASO 3.21 del catálogo del cliente.
+- El catálogo público ahora utiliza las categorías existentes de Supabase para organizar los productos.
+
+- Se agregó una navegación horizontal de categorías con:
+  - `Todos`;
+  - categorías activas del comercio que tengan productos disponibles.
+
+- Las categorías se generan dinámicamente, por lo que no es necesario modificar el frontend cuando el comercio crea nuevas categorías.
+
+- Al seleccionar una categoría:
+  - se resaltan visualmente las opciones activas;
+  - se muestran únicamente los productos correspondientes;
+  - el filtrado ocurre sin recargar la página.
+
+- La opción `Todos` permite regresar al catálogo completo.
+
+- En dispositivos móviles la navegación permite desplazamiento horizontal.
+
+- Se mantienen intactos:
+  - botones `Agregar`;
+  - cantidades del carrito;
+  - productos previamente agregados;
+  - total del pedido;
+  - flujo de checkout existente.
+
+- Se realizó una prueba real:
+  - se seleccionó `Bebidas`;
+  - se agregó `Agua 600ml`;
+  - se regresó a `Todos`;
+  - el producto permaneció en el carrito;
+  - el total permaneció correctamente en `$ 2.500`.
+
+- No fue necesario modificar la base de datos.
+
+- Archivos modificados:
+  - `js/catalogo.js`;
+  - `demo.html`.
+
+- Con este cambio el catálogo deja de presentarse únicamente como una lista y queda mejor organizado para el piloto comercial.

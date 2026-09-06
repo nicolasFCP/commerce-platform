@@ -44,6 +44,71 @@
             color: #6b7280;
         }
 
+        /* =====================================================
+   NAVEGACIÓN POR CATEGORÍAS
+===================================================== */
+
+.categorias-navegacion {
+
+    display: flex;
+
+    gap: 10px;
+
+    overflow-x: auto;
+
+    padding: 4px 0 16px;
+
+    margin-bottom: 22px;
+
+    scroll-behavior: smooth;
+
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: none;
+}
+
+
+.categorias-navegacion::-webkit-scrollbar {
+
+    display: none;
+}
+
+
+.categoria-filtro {
+
+    flex: 0 0 auto;
+
+    width: auto;
+
+    padding: 10px 16px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 999px;
+
+    background: white;
+
+    color: #111827;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+
+.categoria-filtro.activa {
+
+    background: #111827;
+
+    color: white;
+
+    border-color: #111827;
+}
+
         .categoria {
             margin-bottom: 28px;
         }
