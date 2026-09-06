@@ -881,3 +881,35 @@ Fecha: 5 de septiembre de 2026
 - La estructura queda preparada para el siguiente paso:
 
   `respuesta automática desde Commerce Platform → WhatsApp`
+
+  ### Version 0.0.35 — Respuestas automáticas de WhatsApp y mensajes salientes
+
+- Se completó el PASO 3.18 de automatización bidireccional por WhatsApp.
+- `whatsapp-webhook` ahora puede responder automáticamente a mensajes de texto entrantes.
+- Se reutiliza la integración existente con Meta WhatsApp Cloud API.
+- El envío utiliza el `phone_number_id` correspondiente al comercio identificado.
+- El token de acceso se mantiene exclusivamente como secreto backend mediante `WHATSAPP_ACCESS_TOKEN`.
+- Se detectó y corrigió un token anterior inválido que producía `OAuthException` código 190.
+- Se creó el usuario del sistema de Meta `commerce_platform_backend`.
+- Se asignaron únicamente los activos necesarios:
+  - app `Commerce Platform`;
+  - `Test WhatsApp Business Account`.
+- Se otorgó al usuario del sistema permiso para enviar y responder mensajes.
+- Se generó un token de usuario del sistema sin caducidad para evitar dependencia de tokens temporales.
+- Se verificó un envío automático real desde Commerce Platform hacia WhatsApp.
+- Las respuestas enviadas se almacenan en `whatsapp_messages` con:
+  - `direction = outgoing`;
+  - `message_type = text`;
+  - texto enviado;
+  - número remitente;
+  - número destinatario;
+  - `message_status = accepted`;
+  - `whatsapp_message_id` real devuelto por Meta.
+- Se verificó en PostgreSQL el flujo completo con una prueba real:
+  - mensaje entrante `Prueba outgoing 1`;
+  - mensaje almacenado como `incoming`;
+  - respuesta automática recibida en WhatsApp;
+  - respuesta almacenada como `outgoing`.
+- Flujo funcional actual:
+
+  `cliente → WhatsApp → Meta → webhook → identificar comercio/cliente → guardar incoming → responder → Meta → cliente → guardar outgoing`

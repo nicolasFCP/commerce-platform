@@ -146,6 +146,10 @@ export default {
                 "META_APP_SECRET"
             );
 
+const whatsappAccessToken =
+    Deno.env.get(
+        "WHATSAPP_ACCESS_TOKEN"
+    );
 
         // ==================================
         // VERIFICAR CONFIGURACIÓN
@@ -697,6 +701,195 @@ if (
 
             whatsapp_message_id:
                 message.id
+        })
+    );
+
+}
+
+// ==================================
+// ENVIAR RESPUESTA AUTOMÁTICA
+// ==================================
+
+if (
+    whatsappSettings
+    &&
+    conversationId
+    &&
+    whatsappAccessToken
+    &&
+    businessPhoneNumberId
+    &&
+    senderPhone
+    &&
+    messageType === "text"
+) {
+
+    const automaticReply =
+        "¡Hola! 👋 Commerce Platform recibió tu mensaje correctamente.";
+
+
+    const metaResponse =
+        await fetch(
+            `https://graph.facebook.com/v25.0/${businessPhoneNumberId}/messages`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Authorization":
+                        `Bearer ${whatsappAccessToken}`,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    messaging_product:
+                        "whatsapp",
+
+                    to:
+                        senderPhone,
+
+                    type:
+                        "text",
+
+                    text: {
+                        body:
+                            automaticReply
+                    }
+
+                })
+            }
+        );
+
+
+    const metaData =
+        await metaResponse.json();
+
+
+    if (!metaResponse.ok) {
+
+        console.error(
+            "Error enviando respuesta automática:",
+            JSON.stringify(metaData)
+        );
+
+
+        return new Response(
+            "Error enviando respuesta automática",
+            {
+                status:
+                    metaResponse.status
+            }
+        );
+
+    }
+
+
+// ==================================
+// GUARDAR MENSAJE SALIENTE
+// ==================================
+
+const outgoingMessageId =
+    metaData?.messages?.[0]?.id
+    ?? null;
+
+
+if (outgoingMessageId) {
+
+    const {
+        data: savedOutgoingMessage,
+        error: outgoingSaveError
+    } = await supabaseAdmin
+        .from(
+            "whatsapp_messages"
+        )
+        .upsert(
+            {
+                store_id:
+                    whatsappSettings.store_id,
+
+                conversation_id:
+                    conversationId,
+
+                whatsapp_message_id:
+                    outgoingMessageId,
+
+                direction:
+                    "outgoing",
+
+                message_type:
+                    "text",
+
+                message_text:
+                    automaticReply,
+
+                sender_phone:
+                    whatsappSettings.display_phone_number,
+
+                recipient_phone:
+                    senderPhone,
+
+                message_status:
+                    "accepted",
+
+                raw_payload:
+                    metaData
+            },
+            {
+                onConflict:
+                    "whatsapp_message_id"
+            }
+        )
+        .select(
+            "id"
+        )
+        .single();
+
+
+    if (outgoingSaveError) {
+
+        console.error(
+            "Error guardando mensaje saliente WhatsApp:",
+            outgoingSaveError
+        );
+
+
+        return new Response(
+            "Error guardando respuesta",
+            {
+                status: 500
+            }
+        );
+
+    }
+
+
+    console.log(
+        "Mensaje saliente WhatsApp guardado:",
+        JSON.stringify({
+            message_id:
+                savedOutgoingMessage.id,
+
+            conversation_id:
+                conversationId,
+
+            whatsapp_message_id:
+                outgoingMessageId
+        })
+    );
+
+}
+
+    console.log(
+        "Respuesta automática enviada:",
+        JSON.stringify({
+            recipient:
+                senderPhone,
+
+            whatsapp_message_id:
+                metaData?.messages?.[0]?.id
+                ?? null
         })
     );
 

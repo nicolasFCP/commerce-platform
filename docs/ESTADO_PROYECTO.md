@@ -33,13 +33,15 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.17 — Recepción y persistencia de conversaciones de WhatsApp funcionando.
+PASO 3.18 — Respuestas automáticas de WhatsApp y persistencia de mensajes salientes funcionando.
 
 Completado:
 
 PASO 3.16 — Webhook seguro de WhatsApp, identificación por comercio y recepción de mensajes reales.
 
 PASO 3.17 — Conversaciones y mensajes entrantes de WhatsApp almacenados en PostgreSQL.
+
+PASO 3.18 — Respuesta automática real por WhatsApp y almacenamiento de mensajes salientes.
 
 Actualmente Commerce Platform puede:
 
@@ -48,22 +50,25 @@ Actualmente Commerce Platform puede:
 - identificar automáticamente a qué comercio pertenece el número receptor;
 - identificar al cliente que escribió;
 - crear o reutilizar una conversación;
-- guardar cada mensaje recibido;
+- guardar cada mensaje recibido como `incoming`;
 - evitar duplicados mediante `whatsapp_message_id`;
-- mantener aislamiento multi-comercio.
+- responder automáticamente al cliente por WhatsApp;
+- guardar cada respuesta enviada como `outgoing`;
+- almacenar el `whatsapp_message_id` real generado por Meta;
+- mantener aislamiento multi-comercio;
+- utilizar un token backend de usuario del sistema de Meta sin depender de tokens temporales.
+
+Flujo funcional actual:
+
+`cliente → WhatsApp → Meta → webhook → identificar comercio/cliente → conversación → guardar incoming → generar respuesta → Meta → cliente → guardar outgoing`
 
 Siguiente objetivo:
 
-PASO 3.18 — Envío y registro de respuestas automáticas desde Commerce Platform hacia WhatsApp.
+Convertir la respuesta automática fija de prueba en una respuesta útil para la operación real del comercio, aprovechando el flujo bidireccional que ya funciona.
 
-Objetivo inmediato del MVP:
-
-`mensaje recibido → identificar comercio/cliente → guardar conversación → generar respuesta → enviar WhatsApp → guardar respuesta`
-
-La prioridad actual es completar el flujo mínimo automatizado necesario para comenzar demostraciones y ventas comerciales.
+La prioridad continúa siendo completar únicamente las funciones necesarias para tener un MVP demostrable y vendible.
 
 ---
-
 # Completado
 
 ## 1. Base de datos inicial
@@ -1547,3 +1552,78 @@ El siguiente objetivo es completar el sentido contrario:
 → guardar mensaje como `outgoing`
 
 → continuar la conversación automáticamente.
+
+## 42. Respuestas automáticas y mensajes salientes de WhatsApp
+
+Se completó el flujo bidireccional básico entre Commerce Platform y WhatsApp.
+
+El Edge Function:
+
+`supabase/functions/whatsapp-webhook/index.ts`
+
+ahora puede responder automáticamente cuando recibe un mensaje real de texto.
+
+La respuesta utiliza:
+
+- el `phone_number_id` del comercio identificado;
+- el número del cliente que originó el mensaje;
+- Meta WhatsApp Cloud API;
+- `WHATSAPP_ACCESS_TOKEN` almacenado exclusivamente como secreto backend.
+
+Durante la prueba se detectó que el token anterior utilizado para envíos había dejado de ser válido y Meta devolvía:
+
+`OAuthException — code 190 — Authentication Error`
+
+Para evitar depender de tokens temporales se creó en Meta Business:
+
+`commerce_platform_backend`
+
+como usuario del sistema.
+
+Se le asignaron únicamente los activos necesarios:
+
+- app `Commerce Platform`;
+- `Test WhatsApp Business Account`.
+
+Para la cuenta de WhatsApp se otorgó permiso de mensajería para enviar y responder mensajes.
+
+Posteriormente se generó un token de usuario del sistema con caducidad configurada en `Nunca`, utilizado mediante:
+
+`WHATSAPP_ACCESS_TOKEN`
+
+en los secretos de Supabase.
+
+Se realizó una prueba real enviando desde el cliente:
+
+`Prueba respuesta automática 2`
+
+y Commerce Platform respondió correctamente por WhatsApp.
+
+Después se incorporó la persistencia del mensaje saliente en:
+
+`public.whatsapp_messages`
+
+utilizando:
+
+- `direction = outgoing`;
+- `message_type = text`;
+- texto de la respuesta;
+- número remitente;
+- número destinatario;
+- `message_status = accepted`;
+- `whatsapp_message_id` devuelto por Meta.
+
+La prueba final utilizada fue:
+
+`Prueba outgoing 1`
+
+La base de datos confirmó dos registros consecutivos:
+
+- mensaje del cliente con `direction = incoming` y `message_status = received`;
+- respuesta de Commerce Platform con `direction = outgoing` y `message_status = accepted`.
+
+Con esto quedó validado el flujo:
+
+`mensaje entrante → persistencia → respuesta automática → envío real por Meta → persistencia del mensaje saliente`
+
+Commerce Platform ya dispone de comunicación bidireccional básica y persistente por WhatsApp.
