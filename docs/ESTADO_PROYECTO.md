@@ -33,57 +33,62 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.19 — Menú operativo de WhatsApp, consulta de pedidos y transferencia a atención humana funcionando.
+PASO 3.20 — Atención humana de WhatsApp integrada completamente al panel administrativo.
 
 Completado:
 
 PASO 3.16 — Webhook seguro de WhatsApp, identificación por comercio y recepción de mensajes reales.
 
-PASO 3.17 — Conversaciones y mensajes entrantes de WhatsApp almacenados en PostgreSQL.
+PASO 3.17 — Conversaciones y mensajes entrantes almacenados en PostgreSQL.
 
-PASO 3.18 — Respuesta automática real por WhatsApp y almacenamiento de mensajes salientes.
+PASO 3.18 — Respuestas automáticas reales por WhatsApp y almacenamiento de mensajes salientes.
 
-PASO 3.19 — Menú conversacional, consulta segura de pedidos y handoff a atención humana.
+PASO 3.19 — Menú conversacional, consulta segura de pedidos y transferencia a atención humana.
+
+PASO 3.20 — Gestión de atención humana directamente desde el panel del comercio.
 
 Actualmente Commerce Platform puede:
 
 - recibir mensajes reales desde WhatsApp;
-- validar los eventos enviados por Meta;
-- identificar automáticamente el comercio receptor;
-- identificar al cliente;
-- crear o reutilizar conversaciones;
-- guardar mensajes `incoming`;
-- enviar y almacenar mensajes `outgoing`;
-- evitar duplicados mediante `whatsapp_message_id`;
-- mostrar un menú automático al cliente;
-- enviar al cliente al catálogo público;
-- consultar pedidos reales mediante códigos `CP-XXXXXXXX`;
-- validar que el pedido pertenezca al comercio correcto;
-- validar que el pedido pertenezca al número telefónico que consulta;
-- devolver al cliente el estado actual del pedido;
+- identificar automáticamente comercio y cliente;
+- almacenar conversaciones y mensajes;
+- responder automáticamente;
+- mostrar un menú de opciones;
+- enviar al cliente al catálogo;
+- consultar pedidos mediante códigos `CP-XXXXXXXX`;
+- validar pedido, comercio y teléfono;
 - permitir que el cliente solicite hablar con la tienda;
-- marcar una conversación para atención humana;
-- continuar almacenando mensajes durante la atención humana;
-- suspender las respuestas automáticas mientras exista un handoff activo;
-- mantener aislamiento multi-comercio.
+- suspender la automatización durante la atención humana;
+- mostrar conversaciones pendientes dentro del panel administrativo;
+- mostrar los últimos mensajes de cada conversación;
+- diferenciar mensajes del cliente y de la tienda;
+- permitir que la tienda escriba y envíe respuestas desde el panel;
+- enviar esas respuestas mediante WhatsApp Cloud API;
+- almacenar las respuestas humanas como `outgoing`;
+- finalizar la atención humana mediante una RPC segura;
+- volver a enviar automáticamente el menú al cliente;
+- reactivar posteriormente la automatización;
+- mantener aislamiento multi-comercio mediante RLS.
 
-Flujo funcional actual:
+Flujo actual de atención humana:
 
-`cliente → WhatsApp → webhook → conversación → guardar incoming → menú → catálogo / pedido / atención humana`
+`cliente → opción 3 → conversación pendiente → panel del comercio → respuesta humana → WhatsApp`
 
-Flujo de consulta:
+Flujo de finalización:
 
-`CP-XXXXXXXX → identificar comercio → localizar pedido → validar teléfono → devolver estado`
-
-Flujo de atención humana:
-
-`opción 3 → marcar conversación → confirmar al cliente → guardar mensajes posteriores → bot en silencio`
+`Finalizar atención → enviar menú → confirmar Meta → resolver handoff → bot nuevamente activo`
 
 Siguiente objetivo:
 
-PASO 3.20 — Hacer visible en el panel del comercio qué conversaciones requieren atención humana y permitir resolver el handoff para reactivar posteriormente la automatización.
+PASO 3.21 — Organizar el catálogo público del cliente mediante navegación por categorías para mejorar la presentación del piloto comercial.
 
-La prioridad continúa siendo cerrar únicamente las funciones necesarias para una demo comercial y un primer comercio piloto.
+Después:
+
+PASO 3.22 — Alta rápida de un comercio nuevo y prueba completa con un segundo comercio aislado.
+
+Objetivo inmediato:
+
+tener una versión suficientemente organizada, sencilla y estable para demostrarla y comenzar un primer comercio piloto sin requerir operaciones técnicas complejas.
 
 ---
 
@@ -1771,3 +1776,124 @@ La lógica fue corregida para:
 4. enviar a Meta únicamente cuando corresponda.
 
 Con esto Commerce Platform ya puede mantener una conversación básica útil con un cliente y transferirla de forma controlada desde automatización hacia atención humana.
+
+## 44. Atención humana desde el panel administrativo
+
+Se completó la integración entre las solicitudes de atención humana de WhatsApp y el panel administrativo del comercio.
+
+Cuando una conversación tiene:
+
+`human_handoff_requested = true`
+
+aparece automáticamente dentro de:
+
+`Conversaciones por atender`
+
+en `admin.html`.
+
+El panel muestra:
+
+- nombre del cliente;
+- teléfono;
+- fecha de solicitud;
+- últimos mensajes;
+- mensajes identificados como `Cliente` o `Tienda`.
+
+La información se obtiene utilizando la sesión autenticada del comercio y las políticas RLS existentes.
+
+No se utiliza un `store_id` escrito manualmente en el frontend.
+
+### Resolución segura de atención humana
+
+Se creó:
+
+`sql/061_whatsapp_resolve_handoff.sql`
+
+con la función:
+
+`public.resolve_whatsapp_handoff(uuid)`
+
+La función permite resolver únicamente conversaciones pertenecientes a un comercio asociado al usuario autenticado.
+
+Al resolver una conversación:
+
+`human_handoff_requested = false`
+
+y:
+
+`human_handoff_resolved_at = now()`
+
+### Respuesta humana desde Commerce Platform
+
+Se creó:
+
+`supabase/functions/whatsapp-send-human/index.ts`
+
+La función exige un usuario autenticado.
+
+Recibe:
+
+- `conversation_id`;
+- texto del mensaje.
+
+La conversación se consulta respetando RLS.
+
+Antes del envío se valida que:
+
+- la conversación exista;
+- pertenezca al comercio autenticado;
+- continúe en atención humana;
+- el comercio tenga una configuración activa de WhatsApp.
+
+La función obtiene el `phone_number_id` asociado al comercio y utiliza el token almacenado únicamente como secreto del backend.
+
+El mensaje se envía mediante WhatsApp Cloud API.
+
+Una vez aceptado por Meta, se registra en:
+
+`public.whatsapp_messages`
+
+como:
+
+`direction = outgoing`
+
+con el `whatsapp_message_id` real devuelto por Meta.
+
+### Mini chat administrativo
+
+La sección de atención humana ahora incluye una caja de texto y el botón:
+
+`Enviar por WhatsApp`
+
+Esto permite que el comercio continúe la conversación directamente desde Commerce Platform.
+
+El historial muestra hasta los últimos mensajes recientes y se actualiza automáticamente después de enviar una nueva respuesta.
+
+Se verificó con mensajes reales que:
+
+`admin.html → Edge Function → Meta → WhatsApp del cliente`
+
+funciona correctamente.
+
+### Finalización de atención
+
+El botón:
+
+`Finalizar atención y reactivar bot`
+
+realiza primero un nuevo envío del menú de opciones al cliente.
+
+Únicamente después de que Meta confirme el envío se ejecuta:
+
+`resolve_whatsapp_handoff`
+
+De esta manera, si el envío a WhatsApp falla, la conversación continúa marcada como atención humana.
+
+La prueba real confirmó:
+
+- mensaje de menú recibido por el cliente;
+- conversación eliminada de pendientes;
+- handoff resuelto;
+- automatización nuevamente activa.
+
+Con este paso, un comercio puede administrar una solicitud humana sin abandonar Commerce Platform.

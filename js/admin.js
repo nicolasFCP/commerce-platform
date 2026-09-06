@@ -22,6 +22,20 @@ const listaPedidos = document.querySelector('#lista-pedidos');
 
 
 // ======================================================
+// ELEMENTOS DE CONVERSACIONES WHATSAPP
+// ======================================================
+
+const whatsappHandoffEstado =
+    document.querySelector(
+        '#whatsapp-handoff-estado'
+    );
+
+const whatsappHandoffLista =
+    document.querySelector(
+        '#whatsapp-handoff-lista'
+    );
+
+// ======================================================
 // ELEMENTOS DEL PANEL DE PRODUCTOS
 // ======================================================
 
@@ -256,6 +270,377 @@ await cargarDashboard();
 await cargarReportes();
 
 await cargarAnalisisProductos();
+
+await cargarConversacionesHandoff();
+}
+
+// ======================================================
+// CARGAR CONVERSACIONES WHATSAPP POR ATENDER
+// ======================================================
+
+async function cargarConversacionesHandoff() {
+
+    if (
+        !whatsappHandoffEstado
+        ||
+        !whatsappHandoffLista
+    ) {
+        return;
+    }
+
+
+    whatsappHandoffEstado.textContent =
+        'Cargando conversaciones...';
+
+    whatsappHandoffLista.innerHTML = '';
+
+
+    // ==================================================
+    // BUSCAR CONVERSACIONES EN ATENCIÓN HUMANA
+    // ==================================================
+
+    const {
+        data: conversaciones,
+        error: conversacionesError
+    } = await supabase
+        .from('whatsapp_conversations')
+        .select(`
+            id,
+            customer_name,
+            customer_phone,
+            human_handoff_requested_at,
+            last_message_at
+        `)
+        .eq(
+            'human_handoff_requested',
+            true
+        )
+        .order(
+            'human_handoff_requested_at',
+            {
+                ascending: true
+            }
+        );
+
+
+    if (conversacionesError) {
+
+        console.error(
+            'Error cargando conversaciones WhatsApp:',
+            conversacionesError
+        );
+
+        whatsappHandoffEstado.textContent =
+            'No se pudieron cargar las conversaciones.';
+
+        return;
+    }
+
+
+    if (
+        !conversaciones
+        ||
+        conversaciones.length === 0
+    ) {
+
+        whatsappHandoffEstado.textContent =
+            'No hay conversaciones pendientes. ✅';
+
+        return;
+    }
+
+
+    // ==================================================
+    // BUSCAR MENSAJES DE ESAS CONVERSACIONES
+    // ==================================================
+
+    const conversationIds =
+        conversaciones.map(
+            conversacion =>
+                conversacion.id
+        );
+
+
+    const {
+        data: mensajes,
+        error: mensajesError
+    } = await supabase
+        .from('whatsapp_messages')
+        .select(`
+            conversation_id,
+            message_text,
+            direction,
+            created_at
+        `)
+        .in(
+            'conversation_id',
+            conversationIds
+        )
+        .order(
+            'created_at',
+            {
+                ascending: false
+            }
+        );
+
+
+    if (mensajesError) {
+
+        console.error(
+            'Error cargando mensajes WhatsApp:',
+            mensajesError
+        );
+
+        whatsappHandoffEstado.textContent =
+            'No se pudieron cargar los mensajes.';
+
+        return;
+    }
+
+
+    // ==================================================
+    // OBTENER ÚLTIMO MENSAJE DE CADA CONVERSACIÓN
+    // ==================================================
+
+   const mensajesPorConversacion =
+    new Map();
+
+
+(mensajes ?? []).forEach(
+    mensaje => {
+
+        if (
+            !mensajesPorConversacion
+                .has(
+                    mensaje.conversation_id
+                )
+        ) {
+
+            mensajesPorConversacion
+                .set(
+                    mensaje.conversation_id,
+                    []
+                );
+        }
+
+
+        const lista =
+            mensajesPorConversacion
+                .get(
+                    mensaje.conversation_id
+                );
+
+
+        // Guardar máximo los 6 mensajes más recientes
+        if (lista.length < 6) {
+
+            lista.push(
+                mensaje
+            );
+        }
+    }
+);
+
+    // ==================================================
+    // MOSTRAR CONVERSACIONES
+    // ==================================================
+
+    conversaciones.forEach(
+        conversacion => {
+
+            const mensajesConversacion =
+    (
+        mensajesPorConversacion
+            .get(
+                conversacion.id
+            )
+        ?? []
+    )
+        .slice()
+        .reverse();
+
+            const tarjeta =
+                document.createElement(
+                    'article'
+                );
+
+
+            tarjeta.className =
+                'whatsapp-handoff-card';
+
+
+            const nombre =
+                document.createElement('h3');
+
+            nombre.textContent =
+                conversacion.customer_name
+                ||
+                'Cliente WhatsApp';
+
+
+            const telefono =
+                document.createElement('p');
+
+            telefono.textContent =
+                `📞 ${conversacion.customer_phone}`;
+
+
+            const historial =
+    document.createElement(
+        'div'
+    );
+
+
+historial.className =
+    'whatsapp-handoff-history';
+
+
+const tituloHistorial =
+    document.createElement(
+        'strong'
+    );
+
+
+tituloHistorial.textContent =
+    'Últimos mensajes';
+
+
+historial.appendChild(
+    tituloHistorial
+);
+
+
+mensajesConversacion.forEach(
+    mensaje => {
+
+        const linea =
+            document.createElement(
+                'p'
+            );
+
+
+        const autor =
+            mensaje.direction ===
+                'incoming'
+
+                ? 'Cliente'
+                : 'Tienda';
+
+
+        linea.textContent =
+            `${autor}: ${
+                mensaje.message_text
+                ?? '[Mensaje sin texto]'
+            }`;
+
+
+        historial.appendChild(
+            linea
+        );
+    }
+);
+
+
+            const fecha =
+                document.createElement('p');
+
+
+            if (
+                conversacion
+                    .human_handoff_requested_at
+            ) {
+
+                fecha.textContent =
+                    `🕒 Solicitó atención: ${
+                        new Date(
+                            conversacion
+                                .human_handoff_requested_at
+                        ).toLocaleString(
+                            'es-CO'
+                        )
+                    }`;
+
+            } else {
+
+                fecha.textContent =
+                    '🕒 Atención solicitada';
+            }
+
+const respuesta =
+    document.createElement(
+        'textarea'
+    );
+
+
+respuesta.className =
+    'whatsapp-human-message';
+
+
+respuesta.placeholder =
+    'Escribe una respuesta para el cliente...';
+
+
+respuesta.rows =
+    3;
+
+
+const botonEnviar =
+    document.createElement(
+        'button'
+    );
+
+
+botonEnviar.type =
+    'button';
+
+
+botonEnviar.className =
+    'enviar-whatsapp-humano';
+
+
+botonEnviar.dataset.conversationId =
+    conversacion.id;
+
+
+botonEnviar.textContent =
+    'Enviar por WhatsApp';
+
+            const boton =
+                document.createElement('button');
+
+
+            boton.type =
+                'button';
+
+
+            boton.className =
+                'reactivar-bot-whatsapp';
+
+
+            boton.dataset.conversationId =
+                conversacion.id;
+
+
+            boton.textContent =
+    'Finalizar atención y reactivar bot';
+
+
+            tarjeta.append(
+    nombre,
+    telefono,
+    historial,
+    fecha,
+    respuesta,
+    botonEnviar,
+    boton
+);
+
+
+            whatsappHandoffLista.appendChild(
+                tarjeta
+            );
+        }
+    );
 }
 
 // ======================================================
@@ -3272,6 +3657,322 @@ listaPedidos.addEventListener(
 
 
         await cargarPedidos();
+
+    }
+);
+
+// ======================================================
+// ENVIAR RESPUESTA HUMANA POR WHATSAPP
+// ======================================================
+
+whatsappHandoffLista.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.enviar-whatsapp-humano'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const tarjeta =
+            boton.closest(
+                '.whatsapp-handoff-card'
+            );
+
+
+        const textarea =
+            tarjeta.querySelector(
+                '.whatsapp-human-message'
+            );
+
+
+        const message =
+            textarea.value.trim();
+
+
+        if (!message) {
+
+            alert(
+                'Escribe primero un mensaje para el cliente.'
+            );
+
+            return;
+        }
+
+
+        const conversationId =
+            boton.dataset.conversationId;
+
+
+        const textoOriginal =
+            boton.textContent;
+
+
+        boton.disabled = true;
+
+        textarea.disabled = true;
+
+        boton.textContent =
+            'Enviando...';
+
+
+        const {
+            data,
+            error
+        } = await supabase.functions.invoke(
+            'whatsapp-send-human',
+            {
+                body: {
+                    conversation_id:
+                        conversationId,
+
+                    message:
+                        message
+                }
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error enviando respuesta humana:',
+                error
+            );
+
+
+            alert(
+                'No se pudo enviar el mensaje por WhatsApp.'
+            );
+
+
+            boton.disabled = false;
+
+            textarea.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        if (
+            !data
+            ||
+            data.ok !== true
+        ) {
+
+            console.error(
+                'Respuesta inesperada:',
+                data
+            );
+
+
+            alert(
+                data?.message
+                ?? 'No se pudo enviar el mensaje.'
+            );
+
+
+            boton.disabled = false;
+
+            textarea.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        textarea.value = '';
+
+
+        boton.disabled = false;
+
+        textarea.disabled = false;
+
+        boton.textContent =
+            textoOriginal;
+
+
+        await cargarConversacionesHandoff();
+
+alert(
+    'Mensaje enviado por WhatsApp ✅'
+);
+
+    }
+);
+
+// ======================================================
+// FINALIZAR ATENCIÓN Y REACTIVAR BOT
+// ======================================================
+
+whatsappHandoffLista.addEventListener(
+    'click',
+    async event => {
+
+        const boton =
+            event.target.closest(
+                '.reactivar-bot-whatsapp'
+            );
+
+
+        if (!boton) {
+            return;
+        }
+
+
+        const conversationId =
+            boton.dataset.conversationId;
+
+
+        const confirmar =
+            window.confirm(
+                '¿La tienda ya terminó de atender al cliente? Se enviará nuevamente el menú y se reactivará el bot.'
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        const textoOriginal =
+            boton.textContent;
+
+
+        boton.disabled = true;
+
+        boton.textContent =
+            'Finalizando atención...';
+
+
+        // ==============================================
+        // MENÚ QUE RECIBIRÁ NUEVAMENTE EL CLIENTE
+        // ==============================================
+
+        const menuWhatsApp = `
+¡Hola! 👋 Bienvenido.
+
+¿En qué podemos ayudarte?
+
+1. 🛒 Ver productos
+2. 📦 Consultar mi pedido
+3. 👤 Hablar con la tienda
+
+Responde con 1, 2 o 3.
+        `.trim();
+
+
+        // ==============================================
+        // ENVIAR MENÚ ANTES DE REACTIVAR
+        // ==============================================
+
+        const {
+            data: whatsappData,
+            error: whatsappError
+        } = await supabase.functions.invoke(
+            'whatsapp-send-human',
+            {
+                body: {
+                    conversation_id:
+                        conversationId,
+
+                    message:
+                        menuWhatsApp
+                }
+            }
+        );
+
+
+        if (
+            whatsappError
+            ||
+            !whatsappData
+            ||
+            whatsappData.ok !== true
+        ) {
+
+            console.error(
+                'Error enviando menú de reactivación:',
+                whatsappError
+                ?? whatsappData
+            );
+
+
+            alert(
+                'No se pudo enviar el menú al cliente. El bot seguirá en atención humana.'
+            );
+
+
+            boton.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        // ==============================================
+        // RESOLVER HANDOFF
+        // ==============================================
+
+        const {
+            data,
+            error
+        } = await supabase.rpc(
+            'resolve_whatsapp_handoff',
+            {
+                p_conversation_id:
+                    conversationId
+            }
+        );
+
+
+        if (error) {
+
+            console.error(
+                'Error reactivando bot:',
+                error
+            );
+
+
+            alert(
+                'El menú fue enviado, pero no se pudo reactivar el bot.'
+            );
+
+
+            boton.disabled = false;
+
+            boton.textContent =
+                textoOriginal;
+
+            return;
+        }
+
+
+        console.log(
+            'Handoff resuelto:',
+            data
+        );
+
+
+        await cargarConversacionesHandoff();
+
+
+        alert(
+            'Atención finalizada y bot reactivado ✅'
+        );
 
     }
 );
