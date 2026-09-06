@@ -33,36 +33,56 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.21 — Navegación por categorías del catálogo público funcionando.
+PASO 3.22 — Panel maestro y alta automática multi-comercio funcionando.
 
 Completado:
 
-PASO 3.19 — Menú de WhatsApp, consulta de pedidos y transferencia a atención humana.
-
 PASO 3.20 — Atención humana de WhatsApp integrada al panel administrativo.
 
-PASO 3.21 — Categorías dinámicas y filtrado de productos en el catálogo público.
+PASO 3.21 — Navegación dinámica por categorías en el catálogo público.
 
-Actualmente el catálogo del cliente puede:
+PASO 3.22 — Alta automática de comercios, panel maestro y prueba real de aislamiento multi-comercio.
 
-- cargar categorías reales desde Supabase;
-- mostrar únicamente categorías activas que tengan productos disponibles;
-- mostrar una opción `Todos`;
-- filtrar productos sin recargar la página;
-- mantener visible la categoría seleccionada;
-- permitir navegación horizontal en celular;
-- conservar carrito, cantidades y total al cambiar de categoría.
+Actualmente Commerce Platform puede:
+
+- administrar múltiples comercios aislados;
+- crear nuevos propietarios en Supabase Auth desde un backend seguro;
+- crear automáticamente un comercio;
+- asociar al propietario como `owner`;
+- crear automáticamente una categoría inicial `General`;
+- impedir que un owner normal cree otros comercios;
+- distinguir administradores de plataforma mediante `platform_admins`;
+- utilizar un panel maestro separado del panel de cada tienda;
+- listar los comercios desde el panel maestro;
+- mostrar cantidad de comercios activos;
+- cargar el catálogo público según el slug recibido en la URL;
+- mantener aislamiento de pedidos, productos, ventas, configuraciones y conversaciones entre comercios.
+
+Flujo actual de alta:
+
+`platform_admin → panel maestro → datos del cliente → Edge Function → Auth → store → owner → categoría General`
+
+Flujo público:
+
+`demo.html?store=<slug> → identificar comercio → categorías/productos únicamente de ese comercio`
+
+Pruebas reales realizadas:
+
+`Mercado Demo`
+`Tienda Piloto Norte`
+`Tienda Piloto Sur`
+
+Se verificó que el owner de Tienda Piloto Norte inicia con sus propios datos vacíos y no puede visualizar información de Mercado Demo.
 
 Siguiente objetivo:
 
-PASO 3.22 — Alta rápida de un comercio nuevo y prueba completa con un segundo comercio aislado.
+PASO 3.23 — Gestión de categorías desde el panel del comercio.
 
 Objetivo inmediato:
 
-comprobar que un nuevo cliente pueda pasar de “acaba de comprar Commerce Platform” a “tienda funcionando” sin repetir manualmente todo el proceso técnico realizado con Mercado Demo.
+permitir que una tienda recién creada pueda organizar por sí misma categorías como Bebidas, Aseo, Mercado, Lácteos u otras y cargar productos sin depender de operaciones manuales en Supabase.
 
 ---
-
 
 # Completado
 
@@ -1908,3 +1928,126 @@ Resultado:
 - flujo de pedido intacto.
 
 Con este paso el catálogo tiene una estructura más apropiada para presentar Commerce Platform a un comercio piloto.
+
+## 46. Panel maestro y alta automática de comercios
+
+Se creó una capa administrativa superior para Commerce Platform independiente del panel utilizado por cada tienda.
+
+Archivo principal:
+
+`platform-admin.html`
+
+JavaScript:
+
+`js/platform-admin.js`
+
+El panel maestro utiliza Supabase Auth y posteriormente ejecuta:
+
+`public.is_platform_admin()`
+
+Solo un usuario registrado y activo en:
+
+`public.platform_admins`
+
+puede acceder al contenido administrativo de plataforma.
+
+### Alta automática
+
+Se creó:
+
+`supabase/functions/platform-create-store/index.ts`
+
+La Edge Function exige autenticación y vuelve a comprobar en backend que el usuario sea `platform_admin`.
+
+El proceso realiza:
+
+`validaciones → Auth user → store → store_member owner → categoría General`
+
+El `service_role` se mantiene exclusivamente en backend.
+
+Se agregaron las migraciones:
+
+`sql/062_platform_admins.sql`
+
+`sql/063_is_platform_admin.sql`
+
+`sql/064_platform_create_store_service_role.sql`
+
+`sql/065_platform_create_store_categories.sql`
+
+### Prueba con segundo comercio
+
+Se creó automáticamente:
+
+`Tienda Piloto Norte`
+
+con owner independiente.
+
+Al iniciar sesión con dicho usuario se comprobó:
+
+- pedidos = 0;
+- ventas = 0;
+- productos = 0;
+- conversaciones pendientes = 0;
+- sin configuraciones pertenecientes a Mercado Demo.
+
+Esto confirmó el aislamiento multi-tenant con un segundo comercio real dentro del mismo proyecto.
+
+### Catálogo por comercio
+
+`js/catalogo.js` dejó de depender exclusivamente del slug fijo `mercado-demo`.
+
+Ahora puede obtenerlo mediante:
+
+`?store=<slug>`
+
+Ejemplo probado:
+
+`demo.html?store=tienda-piloto-norte`
+
+El catálogo cargó correctamente Tienda Piloto Norte y no mostró productos pertenecientes a Mercado Demo.
+
+### Inicialización automática
+
+Se comprobó manualmente que una tienda sin categorías no podía cargar cómodamente su primer producto.
+
+Por ello el proceso de alta fue ampliado para crear automáticamente:
+
+`General`
+
+como categoría inicial.
+
+Posteriormente se creó:
+
+`Tienda Piloto Sur`
+
+y una consulta confirmó en una sola alta:
+
+- Auth user;
+- store;
+- store_member con role `owner`;
+- categoría `General`.
+
+### Listado de comercios
+
+Se creó:
+
+`sql/066_platform_list_stores.sql`
+
+con:
+
+`public.platform_list_stores()`
+
+La función valida `platform_admin` antes de devolver información global de los comercios.
+
+El panel maestro muestra actualmente:
+
+- Mercado Demo;
+- Tienda Piloto Norte;
+- Tienda Piloto Sur.
+
+También muestra el contador:
+
+`Comercios activos: 3`
+
+Con este paso el alta básica de un nuevo cliente ya puede realizarse desde Commerce Platform sin repetir manualmente el proceso técnico utilizado originalmente con Mercado Demo.

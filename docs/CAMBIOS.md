@@ -1145,3 +1145,122 @@ Fecha: 5 de septiembre de 2026
   - `demo.html`.
 
 - Con este cambio el catálogo deja de presentarse únicamente como una lista y queda mejor organizado para el piloto comercial.
+
+### Version 0.0.39 — Panel maestro y alta automática multi-comercio
+
+- Se completó el PASO 3.22 de Commerce Platform.
+
+- Se creó un panel maestro independiente:
+
+  `platform-admin.html`
+
+- Este panel está separado de:
+
+  `admin.html`
+
+  para evitar mezclar la administración de Commerce Platform con la administración interna de cada tienda.
+
+- Se creó:
+
+  `public.platform_admins`
+
+  para identificar qué usuarios pueden administrar la plataforma completa.
+
+- Los propietarios normales de comercios no reciben permisos para crear nuevas tiendas.
+
+- Se creó la RPC:
+
+  `public.is_platform_admin()`
+
+  que permite comprobar de forma segura si el usuario autenticado es administrador de Commerce Platform.
+
+- El panel maestro permanece oculto hasta:
+  - autenticar al usuario;
+  - verificar `is_platform_admin() = true`.
+
+- Se creó la Edge Function:
+
+  `supabase/functions/platform-create-store/index.ts`
+
+- La función permite realizar desde el panel maestro el alta automática de un nuevo comercio.
+
+- El alta recibe:
+  - nombre del negocio;
+  - slug;
+  - teléfono;
+  - correo del propietario;
+  - contraseña inicial.
+
+- Antes de crear el comercio se valida:
+  - usuario autenticado;
+  - condición de `platform_admin`;
+  - slug válido;
+  - slug no utilizado;
+  - correo;
+  - longitud mínima de contraseña.
+
+- El alta automática realiza:
+
+  `crear usuario Auth → crear store → crear store_member owner → crear categoría General`
+
+- Se implementó lógica de reversión para intentar eliminar los recursos creados si el proceso falla antes de completarse.
+
+- Se agregaron permisos exclusivamente para `service_role` necesarios para:
+  - consultar, crear y revertir stores;
+  - crear store_members;
+  - crear la categoría inicial.
+
+- Se realizaron dos altas reales de prueba:
+  - `Tienda Piloto Norte`;
+  - `Tienda Piloto Sur`.
+
+- Se verificó que cada comercio nuevo tiene:
+  - usuario propio en Supabase Auth;
+  - registro independiente en `stores`;
+  - membresía `owner`;
+  - membresía activa;
+  - categoría inicial `General`.
+
+- Se comprobó aislamiento real iniciando sesión con el owner de `Tienda Piloto Norte`.
+
+- El nuevo comercio mostró:
+  - 0 pedidos;
+  - 0 ventas;
+  - 0 productos;
+  - ninguna conversación de Mercado Demo;
+  - ninguna configuración bancaria de Mercado Demo.
+
+- El catálogo público dejó de depender exclusivamente de:
+
+  `mercado-demo`
+
+- Ahora puede determinar el comercio mediante:
+
+  `demo.html?store=<slug>`
+
+- Se verificó:
+
+  `demo.html?store=tienda-piloto-norte`
+
+  mostrando correctamente `Tienda Piloto Norte` sin productos ni información perteneciente a Mercado Demo.
+
+- Se creó:
+
+  `public.platform_list_stores()`
+
+- La RPC solo permite consultar la lista completa si el usuario autenticado es `platform_admin`.
+
+- El panel maestro ahora muestra:
+  - cantidad de comercios activos;
+  - nombre del comercio;
+  - estado;
+  - slug;
+  - propietario;
+  - teléfono.
+
+- Se verificaron actualmente tres comercios activos:
+  - Mercado Demo;
+  - Tienda Piloto Norte;
+  - Tienda Piloto Sur.
+
+- Con este paso ya no es necesario entrar manualmente a Auth, `stores` y `store_members` para dar de alta un cliente nuevo.

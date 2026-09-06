@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Commerce Platform - Administración
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #111827;
+        }
+
+        main {
+            width: min(100% - 32px, 900px);
+            margin: 0 auto;
+            padding: 32px 0 80px;
+        }
+
+        section {
+            background: white;
+            padding: 24px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 16px;
+            padding: 13px 16px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(180px, 1fr)
+                );
+            gap: 12px;
+        }
+
+        .resumen-card {
+            padding: 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            background: #f9fafb;
+        }
+
+        .resumen-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 24px;
+        }
+
+        #platform-contenido {
+            display: none;
+        }
+
+        .estado {
+            margin-top: 14px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <main>
+
+        <!-- ==========================================
+             ENCABEZADO
+        =========================================== -->
+
+        <section>
+
+            <h1>
+                Commerce Platform
+            </h1>
+
+            <p>
+                Panel maestro de administración.
+            </p>
+
+        </section>
+
+
+        <!-- ==========================================
+             ACCESO PLATFORM ADMIN
+        =========================================== -->
+
+        <section id="platform-login-section">
+
+            <h2>
+                Acceso administrativo
+            </h2>
+
+            <label for="platform-email">
+                Correo
+            </label>
+
+            <input
+                id="platform-email"
+                type="email"
+                autocomplete="username"
+            >
+
+
+            <label for="platform-password">
+                Contraseña
+            </label>
+
+            <input
+                id="platform-password"
+                type="password"
+                autocomplete="current-password"
+            >
+
+
+            <button
+                id="platform-login"
+                type="button"
+            >
+                Iniciar sesión
+            </button>
+
+
+            <p
+                id="platform-login-estado"
+                class="estado"
+            ></p>
+
+        </section>
+
+
+        <!-- ==========================================
+             CONTENIDO PRIVADO
+        =========================================== -->
+
+        <div id="platform-contenido">
+
+
+            <!-- ======================================
+                 RESUMEN
+            ======================================= -->
+
+            <section>
+
+                <h2>
+                    Resumen de la plataforma
+                </h2>
+
+
+                <div class="panel-grid">
+
+                    <div class="resumen-card">
+                        Comercios activos
+                        <strong id="total-comercios">
+                            -
+                        </strong>
+                    </div>
+
+
+                    <div class="resumen-card">
+                        Solicitudes pendientes
+                        <strong id="total-solicitudes">
+                            -
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================
+                 CREAR COMERCIO
+            ======================================= -->
+
+            <section>
+
+                <h2>
+                    Crear comercio
+                </h2>
+
+                <p>
+                    Utiliza esta opción únicamente después
+                    de aprobar un nuevo cliente.
+                </p>
+
+
+                <label for="nuevo-store-name">
+                    Nombre del negocio
+                </label>
+
+                <input
+                    id="nuevo-store-name"
+                    type="text"
+                    placeholder="Ej: Tienda Piloto Norte"
+                >
+
+
+                <label for="nuevo-store-slug">
+                    Slug
+                </label>
+
+                <input
+                    id="nuevo-store-slug"
+                    type="text"
+                    placeholder="Ej: tienda-piloto-norte"
+                >
+
+
+                <label for="nuevo-store-phone">
+                    Teléfono
+                </label>
+
+                <input
+                    id="nuevo-store-phone"
+                    type="text"
+                    placeholder="Ej: 3001234567"
+                >
+
+
+                <label for="nuevo-owner-email">
+                    Correo del propietario
+                </label>
+
+                <input
+                    id="nuevo-owner-email"
+                    type="email"
+                    placeholder="owner@comercio.com"
+                >
+
+
+                <label for="nuevo-owner-password">
+                    Contraseña inicial
+                </label>
+
+                <input
+                    id="nuevo-owner-password"
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                >
+
+
+                <button
+                    id="crear-nuevo-comercio"
+                    type="button"
+                >
+                    Crear comercio
+                </button>
+
+
+                <p
+                    id="alta-comercio-estado"
+                    class="estado"
+                ></p>
+
+            </section>
+
+
+            <!-- ======================================
+                 SOLICITUDES
+            ======================================= -->
+
+            <section>
+
+                <h2>
+                    Solicitudes pendientes
+                </h2>
+
+                <p id="solicitudes-estado">
+                    Todavía no hay sistema de solicitudes conectado.
+                </p>
+
+                <div id="solicitudes-lista"></div>
+
+            </section>
+
+
+            <!-- ======================================
+                 COMERCIOS
+            ======================================= -->
+
+            <section>
+
+                <h2>
+                    Comercios
+                </h2>
+
+                <p id="comercios-estado">
+                    Cargando comercios...
+                </p>
+
+                <div id="comercios-lista"></div>
+
+            </section>
+
+
+        </div>
+
+
+    </main>
+
+
+    <script
+        type="module"
+        src="./js/platform-admin.js"
+    ></script>
+
+</body>
+
+</html>

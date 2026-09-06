@@ -18,6 +18,20 @@ let metodosPagoActuales = {
     cash_on_delivery_enabled: false
 };
 
+// ======================================================
+// COMERCIO DESDE LA URL
+// ======================================================
+
+const parametrosUrl =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const slugComercio =
+    parametrosUrl.get('store')
+    ?? 'mercado-demo';
+
 /* =====================================================
    CARGAR CATÁLOGO
 ===================================================== */
@@ -30,7 +44,7 @@ async function cargarCatalogo() {
     } = await supabase
         .from('stores')
         .select('id, name, slug')
-        .eq('slug', 'mercado-demo')
+        .eq('slug', slugComercio)
         .eq('active', true)
         .single();
 
