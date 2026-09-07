@@ -645,6 +645,8 @@ textarea {
 
 </section>
 
+
+
 <!-- =================================================
      ANÁLISIS DE PRODUCTOS
 ================================================== -->
@@ -844,7 +846,53 @@ textarea {
 
 </section>
 
-            <!-- =================================================
+            
+
+<!-- =================================================
+     CATEGORÍAS
+================================================== -->
+
+<section id="categorias-admin-section">
+
+    <h2>Categorías</h2>
+
+    <h3>Agregar categoría</h3>
+
+    <form id="categoria-form">
+
+        <label for="categoria-nombre">
+            Nombre
+        </label>
+
+        <input
+            id="categoria-nombre"
+            type="text"
+            placeholder="Ej: Bebidas"
+            required
+        >
+
+        <button
+            id="crear-categoria-button"
+            type="submit"
+        >
+            Crear categoría
+        </button>
+
+    </form>
+
+    <p id="categoria-mensaje"></p>
+
+    <hr>
+
+    <div id="categorias-admin-lista">
+
+        Cargando categorías...
+
+    </div>
+
+</section>
+
+<!-- =================================================
                  PRODUCTOS
             ================================================== -->
 
@@ -856,7 +904,6 @@ textarea {
                <h2>
     Productos
 </h2>
-
 
 <!-- =================================================
      CREAR PRODUCTO

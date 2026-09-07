@@ -181,6 +181,324 @@ const paymentSettingsMensaje = document.querySelector(
     '#payment-settings-mensaje'
 );
 
+
+// ======================================================
+// ELEMENTOS DE CATEGORÍAS
+// ======================================================
+
+const categoriaForm =
+    document.querySelector(
+        '#categoria-form'
+    );
+
+const categoriaNombre =
+    document.querySelector(
+        '#categoria-nombre'
+    );
+
+const crearCategoriaButton =
+    document.querySelector(
+        '#crear-categoria-button'
+    );
+
+const categoriaMensaje =
+    document.querySelector(
+        '#categoria-mensaje'
+    );
+
+const categoriasAdminLista =
+    document.querySelector(
+        '#categorias-admin-lista'
+    );
+
+// ======================================================
+// CARGAR CATEGORÍAS EN PANEL ADMINISTRATIVO
+// ======================================================
+
+async function cargarCategoriasAdmin() {
+
+    categoriasAdminLista.innerHTML =
+        'Cargando categorías...';
+
+
+    const {
+        data: categorias,
+        error
+    } = await supabase
+        .from('categories')
+        .select(`
+            id,
+            name,
+            slug,
+            active
+        `)
+        .order(
+            'name',
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            'Error cargando categorías administrativas:',
+            error
+        );
+
+
+        categoriasAdminLista.textContent =
+            'No se pudieron cargar las categorías.';
+
+        return;
+    }
+
+
+    if (
+        !categorias
+        ||
+        categorias.length === 0
+    ) {
+
+        categoriasAdminLista.textContent =
+            'No hay categorías registradas.';
+
+        return;
+    }
+
+
+    categoriasAdminLista.innerHTML = '';
+
+
+    categorias.forEach(
+        categoria => {
+
+            const tarjeta =
+                document.createElement(
+                    'div'
+                );
+
+
+            tarjeta.className =
+                'item-carrito';
+
+
+            tarjeta.innerHTML = `
+                <strong>
+                    ${categoria.name}
+                </strong>
+
+                <p>
+                    Estado:
+                    ${
+                        categoria.active
+                            ? '🟢 Activa'
+                            : '🔴 Inactiva'
+                    }
+                </p>
+
+                <button
+                    type="button"
+                    data-category-toggle="${categoria.id}"
+                    data-category-active="${categoria.active}"
+                >
+                    ${
+                        categoria.active
+                            ? 'Desactivar categoría'
+                            : 'Activar categoría'
+                    }
+                </button>
+            `;
+
+
+            categoriasAdminLista.appendChild(
+                tarjeta
+            );
+        }
+    );
+}
+
+
+// ======================================================
+// ACTIVAR / DESACTIVAR CATEGORÍA
+// ======================================================
+
+async function cambiarEstadoCategoria(event) {
+
+    const botonCategoria =
+        event.target.closest(
+            '[data-category-toggle]'
+        );
+
+
+    if (!botonCategoria) {
+
+        return;
+    }
+
+
+    const categoryId =
+        botonCategoria.dataset
+            .categoryToggle;
+
+
+    const estaActiva =
+        botonCategoria.dataset
+            .categoryActive === 'true';
+
+
+    const nuevoEstado =
+        !estaActiva;
+
+
+    botonCategoria.disabled = true;
+
+    botonCategoria.textContent =
+        'Guardando...';
+
+
+    const {
+        error
+    } = await supabase
+        .from('categories')
+        .update({
+            active:
+                nuevoEstado
+        })
+        .eq(
+            'id',
+            categoryId
+        );
+
+
+    if (error) {
+
+        console.error(
+            'Error cambiando estado de categoría:',
+            error
+        );
+
+
+        categoriaMensaje.textContent =
+            'No se pudo actualizar la categoría.';
+
+
+        botonCategoria.disabled = false;
+
+        botonCategoria.textContent =
+            estaActiva
+                ? 'Desactivar categoría'
+                : 'Activar categoría';
+
+        return;
+    }
+
+
+    categoriaMensaje.textContent =
+        nuevoEstado
+            ? 'Categoría activada correctamente ✅'
+            : 'Categoría desactivada correctamente ✅';
+
+
+    await cargarCategoriasAdmin();
+
+    await cargarCategorias();
+}
+
+// ======================================================
+// CREAR CATEGORÍA
+// ======================================================
+
+async function crearCategoria(event) {
+
+    event.preventDefault();
+
+
+    const nombre =
+        categoriaNombre.value.trim();
+
+
+    categoriaMensaje.textContent = '';
+
+
+    if (!nombre) {
+
+        categoriaMensaje.textContent =
+            'Escribe el nombre de la categoría.';
+
+        return;
+    }
+
+
+    crearCategoriaButton.disabled = true;
+
+    crearCategoriaButton.textContent =
+        'Creando categoría...';
+
+
+    const {
+        data,
+        error
+    } = await supabase.rpc(
+        'create_category',
+        {
+            p_name: nombre
+        }
+    );
+
+
+    if (error) {
+
+        console.error(
+            'Error creando categoría:',
+            error
+        );
+
+
+        categoriaMensaje.textContent =
+            error.message.includes(
+                'Ya existe una categoría'
+            )
+                ? 'Ya existe una categoría con ese nombre.'
+                : 'No se pudo crear la categoría.';
+
+
+        crearCategoriaButton.disabled = false;
+
+        crearCategoriaButton.textContent =
+            'Crear categoría';
+
+        return;
+    }
+
+
+    console.log(
+        'Categoría creada:',
+        data
+    );
+
+
+    categoriaMensaje.textContent =
+        'Categoría creada correctamente ✅';
+
+
+    categoriaForm.reset();
+
+
+    // Actualizar inmediatamente el selector
+    // utilizado para crear productos.
+    await cargarCategorias();
+
+    await cargarCategoriasAdmin();
+
+
+    crearCategoriaButton.disabled = false;
+
+    crearCategoriaButton.textContent =
+        'Crear categoría';
+}
+
 // ======================================================
 // LOGIN
 // ======================================================
@@ -188,6 +506,16 @@ const paymentSettingsMensaje = document.querySelector(
 formulario.addEventListener(
     'submit',
     iniciarSesion
+);
+
+categoriaForm.addEventListener(
+    'submit',
+    crearCategoria
+);
+
+categoriasAdminLista.addEventListener(
+    'click',
+    cambiarEstadoCategoria
 );
 
 productoForm.addEventListener(
@@ -262,6 +590,8 @@ await cargarPedidos();
 
 
 await cargarCategorias();
+
+await cargarCategoriasAdmin();
 
 await cargarPaymentSettings();
 
@@ -2881,6 +3211,7 @@ async function cargarCategorias() {
         }
     );
 }
+
 
 // ======================================================
 // CREAR PRODUCTO

@@ -1264,3 +1264,83 @@ Fecha: 5 de septiembre de 2026
   - Tienda Piloto Sur.
 
 - Con este paso ya no es necesario entrar manualmente a Auth, `stores` y `store_members` para dar de alta un cliente nuevo.
+
+### Version 0.0.40 — Gestión de categorías desde el panel del comercio
+
+- Se completó el PASO 3.23 de Commerce Platform.
+
+- Cada comercio puede administrar sus propias categorías directamente desde `admin.html`.
+
+- Se agregó una sección de categorías independiente antes de la gestión de productos.
+
+- El comerciante puede:
+  - crear categorías;
+  - consultar categorías activas e inactivas;
+  - activar categorías;
+  - desactivar categorías.
+
+- No se permite eliminar categorías desde el panel.
+
+- Se confirmó que la relación entre `products` y `categories` utiliza `ON DELETE CASCADE`.
+
+- Para evitar eliminar productos accidentalmente, Commerce Platform utiliza activación/desactivación en lugar de eliminación.
+
+- Se creó:
+
+  `public.create_category(text)`
+
+- La RPC:
+  - exige usuario autenticado;
+  - identifica el comercio mediante `store_members`;
+  - crea la categoría únicamente dentro del comercio del usuario;
+  - genera automáticamente el slug;
+  - evita categorías duplicadas dentro de la misma tienda.
+
+- Ejemplos de generación automática de slug:
+
+  `Bebidas` → `bebidas`
+
+  `Lácteos y Huevos` → `lacteos-y-huevos`
+
+- Las políticas RLS existentes de `categories` fueron verificadas.
+
+- Se confirmó aislamiento para:
+  - SELECT;
+  - INSERT;
+  - UPDATE;
+  - DELETE.
+
+- También se verificó la restricción:
+
+  `UNIQUE (store_id, slug)`
+
+  permitiendo el mismo slug en comercios diferentes, pero evitando duplicados dentro de una misma tienda.
+
+- Se comprobó además la relación compuesta:
+
+  `(category_id, store_id) → categories(id, store_id)`
+
+  evitando asociar productos de un comercio con categorías pertenecientes a otro.
+
+- Se probó la creación real de la categoría:
+
+  `Bebidas`
+
+  desde el panel de Tienda Piloto Norte.
+
+- La categoría apareció inmediatamente:
+  - en la lista administrativa;
+  - en el selector para crear productos.
+
+- Se probó desactivar `Bebidas`.
+
+- Al desactivarla:
+  - quedó visible en administración como inactiva;
+  - desapareció del selector de creación de productos;
+  - no se eliminó ningún dato.
+
+- Se probó volver a activar `Bebidas`.
+
+- La categoría volvió inmediatamente al selector de productos.
+
+- La gestión de categorías ya no requiere operaciones manuales desde Supabase.

@@ -33,54 +33,66 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.22 — Panel maestro y alta automática multi-comercio funcionando.
+PASO 3.23 — Gestión de categorías desde el panel del comercio funcionando.
 
 Completado:
 
-PASO 3.20 — Atención humana de WhatsApp integrada al panel administrativo.
-
 PASO 3.21 — Navegación dinámica por categorías en el catálogo público.
 
-PASO 3.22 — Alta automática de comercios, panel maestro y prueba real de aislamiento multi-comercio.
+PASO 3.22 — Panel maestro, alta automática y aislamiento multi-comercio.
+
+PASO 3.23 — Creación, activación y desactivación de categorías desde el panel de cada comercio.
 
 Actualmente Commerce Platform puede:
 
 - administrar múltiples comercios aislados;
-- crear nuevos propietarios en Supabase Auth desde un backend seguro;
-- crear automáticamente un comercio;
-- asociar al propietario como `owner`;
-- crear automáticamente una categoría inicial `General`;
-- impedir que un owner normal cree otros comercios;
-- distinguir administradores de plataforma mediante `platform_admins`;
-- utilizar un panel maestro separado del panel de cada tienda;
-- listar los comercios desde el panel maestro;
-- mostrar cantidad de comercios activos;
-- cargar el catálogo público según el slug recibido en la URL;
-- mantener aislamiento de pedidos, productos, ventas, configuraciones y conversaciones entre comercios.
+- crear nuevos comercios desde un panel maestro;
+- crear automáticamente owner y categoría inicial `General`;
+- cargar catálogos públicos según el slug del comercio;
+- permitir que cada comercio gestione sus propias categorías;
+- generar automáticamente el slug de una categoría;
+- evitar categorías duplicadas dentro de la misma tienda;
+- activar y desactivar categorías sin eliminar productos;
+- actualizar inmediatamente el selector de categorías usado para crear productos;
+- mantener aislamiento multi-comercio mediante RLS y restricciones de base de datos.
 
-Flujo actual de alta:
+Flujo actual de categorías:
 
-`platform_admin → panel maestro → datos del cliente → Edge Function → Auth → store → owner → categoría General`
+`owner autenticado → admin.html → crear categoría → create_category() → identificar store → generar slug → guardar categoría`
 
-Flujo público:
+Cambio de estado:
 
-`demo.html?store=<slug> → identificar comercio → categorías/productos únicamente de ese comercio`
+`categoría activa → desactivar → desaparece del selector y catálogo público`
 
-Pruebas reales realizadas:
+`categoría inactiva → activar → vuelve a estar disponible`
 
-`Mercado Demo`
+Decisión de seguridad:
+
+No se permite eliminar categorías desde el panel porque la relación entre `products` y `categories` utiliza `ON DELETE CASCADE`, lo que podría eliminar productos asociados.
+
+Prueba real realizada:
+
 `Tienda Piloto Norte`
-`Tienda Piloto Sur`
 
-Se verificó que el owner de Tienda Piloto Norte inicia con sus propios datos vacíos y no puede visualizar información de Mercado Demo.
+Categorías verificadas:
+
+`General`
+
+`Bebidas`
+
+Se comprobó:
+
+`crear → desactivar → activar`
+
+sin eliminar información y actualizando el panel inmediatamente.
 
 Siguiente objetivo:
 
-PASO 3.23 — Gestión de categorías desde el panel del comercio.
+PASO 3.24 — Completar la autonomía de configuración inicial de cada comercio y revisar el flujo de administración para dejar una tienda nueva lista para operar sin intervenciones manuales en Supabase.
 
 Objetivo inmediato:
 
-permitir que una tienda recién creada pueda organizar por sí misma categorías como Bebidas, Aseo, Mercado, Lácteos u otras y cargar productos sin depender de operaciones manuales en Supabase.
+revisar qué configuraciones siguen dependiendo de operaciones técnicas manuales y eliminarlas antes de considerar listo el flujo comercial de alta de un nuevo cliente.
 
 ---
 
@@ -2051,3 +2063,128 @@ También muestra el contador:
 `Comercios activos: 3`
 
 Con este paso el alta básica de un nuevo cliente ya puede realizarse desde Commerce Platform sin repetir manualmente el proceso técnico utilizado originalmente con Mercado Demo.
+
+## 47. Gestión de categorías desde el panel del comercio
+
+Se completó la administración de categorías desde `admin.html`.
+
+Cada usuario autenticado puede trabajar únicamente con las categorías pertenecientes a su comercio.
+
+### Seguridad verificada
+
+Las políticas RLS de `public.categories` fueron revisadas.
+
+Existen políticas para usuarios autenticados que limitan:
+
+- SELECT;
+- INSERT;
+- UPDATE;
+- DELETE;
+
+al conjunto de comercios obtenidos mediante:
+
+`private.user_store_ids()`
+
+También se verificó:
+
+`UNIQUE (store_id, slug)`
+
+Esto permite que distintos comercios tengan categorías con el mismo slug, pero impide repetirlo dentro de una misma tienda.
+
+Se confirmó además la relación:
+
+`products(category_id, store_id) → categories(id, store_id)`
+
+evitando cruces de categorías entre comercios.
+
+### Eliminación descartada
+
+Se verificó que la clave foránea de productos hacia categorías utiliza:
+
+`ON DELETE CASCADE`
+
+Por este motivo no se agregó un botón de eliminación al panel.
+
+Eliminar una categoría podría eliminar también productos asociados.
+
+Commerce Platform utiliza:
+
+`activar / desactivar`
+
+como mecanismo seguro de administración.
+
+### RPC create_category
+
+Se creó:
+
+`sql/067_create_category.sql`
+
+con la función:
+
+`public.create_category(text)`
+
+La función:
+
+- exige un usuario autenticado;
+- identifica su comercio mediante `store_members`;
+- valida el nombre;
+- genera automáticamente un slug;
+- evita duplicados dentro del mismo comercio;
+- crea la categoría activa;
+- devuelve el UUID de la nueva categoría.
+
+Ejemplo:
+
+`Lácteos y Huevos`
+
+se transforma automáticamente en:
+
+`lacteos-y-huevos`
+
+### Panel administrativo
+
+Se agregó una sección:
+
+`Categorías`
+
+dentro de `admin.html`.
+
+Permite:
+
+- agregar una categoría;
+- visualizar categorías activas e inactivas;
+- desactivar una categoría;
+- volver a activarla.
+
+La lista administrativa muestra el estado de cada categoría.
+
+Las categorías activas también se cargan automáticamente en el selector utilizado para crear productos.
+
+### Prueba real
+
+En `Tienda Piloto Norte` se creó desde el panel:
+
+`Bebidas`
+
+La categoría apareció inmediatamente:
+
+- en la administración de categorías;
+- en el selector para crear productos.
+
+Posteriormente se desactivó.
+
+Resultado:
+
+`Bebidas → Inactiva`
+
+La categoría dejó de estar disponible para crear productos, pero permaneció almacenada.
+
+Después se volvió a activar.
+
+Resultado:
+
+`Bebidas → Activa`
+
+y reapareció inmediatamente en el selector.
+
+Con este paso, la gestión básica de categorías dejó de depender del SQL Editor o de operaciones manuales en Supabase.
