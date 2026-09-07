@@ -309,6 +309,180 @@
 
             </section>
 
+            <!-- =================================================
+     CONFIGURACIÓN WHATSAPP
+================================================== -->
+
+<section>
+
+    <h2>Configurar WhatsApp</h2>
+
+    <p>
+        Asocia el número de WhatsApp Business de Meta
+        a un comercio.
+    </p>
+
+    <form id="whatsapp-settings-form">
+
+        <label for="whatsapp-store">
+            Comercio
+        </label>
+
+        <select
+            id="whatsapp-store"
+            required
+        >
+            <option value="">
+                Selecciona un comercio
+            </option>
+        </select>
+
+
+        <label for="whatsapp-phone-number-id">
+            Phone Number ID
+        </label>
+
+        <input
+            id="whatsapp-phone-number-id"
+            type="text"
+            placeholder="ID proporcionado por Meta"
+            required
+        >
+
+
+        <label for="whatsapp-waba-id">
+            WhatsApp Business Account ID
+        </label>
+
+        <input
+            id="whatsapp-waba-id"
+            type="text"
+            placeholder="WABA ID"
+        >
+
+
+        <label for="whatsapp-display-number">
+            Número visible
+        </label>
+
+        <input
+            id="whatsapp-display-number"
+            type="text"
+            placeholder="Ej: +57 300 123 4567"
+        >
+
+
+        <label>
+            <input
+                id="whatsapp-active"
+                type="checkbox"
+                checked
+            >
+
+            WhatsApp activo
+        </label>
+
+
+        <button
+            id="whatsapp-settings-button"
+            type="button"
+        >
+            Guardar configuración WhatsApp
+        </button>
+
+    </form>
+
+    <p id="whatsapp-settings-message"></p>
+
+</section>
+
+            <!-- ======================================
+                 CREAR DOMICILIARIO
+            ======================================= -->
+
+            <section>
+
+                <h2>
+                    Crear domiciliario
+                </h2>
+
+                <p>
+                    Crea un perfil de domiciliario y asígnalo
+                    a uno de los comercios activos.
+                </p>
+
+
+                <label for="driver-store">
+                    Comercio
+                </label>
+
+                <select id="driver-store">
+
+                    <option value="">
+                        Selecciona un comercio
+                    </option>
+
+                </select>
+
+
+                <label for="driver-name">
+                    Nombre del domiciliario
+                </label>
+
+                <input
+                    id="driver-name"
+                    type="text"
+                    placeholder="Ej: Carlos Pérez"
+                >
+
+
+                <label for="driver-phone">
+                    Teléfono
+                </label>
+
+                <input
+                    id="driver-phone"
+                    type="text"
+                    placeholder="Ej: 3001234567"
+                >
+
+
+                <label for="driver-email">
+                    Correo de acceso
+                </label>
+
+                <input
+                    id="driver-email"
+                    type="email"
+                    placeholder="domiciliario@correo.com"
+                >
+
+
+                <label for="driver-password">
+                    Contraseña inicial
+                </label>
+
+                <input
+                    id="driver-password"
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                >
+
+
+                <button
+                    id="create-driver-button"
+                    type="button"
+                >
+                    Crear domiciliario
+                </button>
+
+
+                <p
+                    id="create-driver-message"
+                    class="estado"
+                ></p>
+
+            </section>
 
             <!-- ======================================
                  SOLICITUDES

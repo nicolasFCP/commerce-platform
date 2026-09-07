@@ -1344,3 +1344,195 @@ Fecha: 5 de septiembre de 2026
 - La categoría volvió inmediatamente al selector de productos.
 
 - La gestión de categorías ya no requiere operaciones manuales desde Supabase.
+
+## Versión 0.0.41 — Configuración autónoma de comercios y alta controlada de domiciliarios
+
+Fecha: 7 de septiembre de 2026
+
+- Se completó el PASO 3.24 de Commerce Platform.
+
+- Se realizó una auditoría de las tablas relacionadas con cada comercio para identificar operaciones que todavía requerían intervención manual desde Supabase.
+
+- Se identificó la configuración de WhatsApp por comercio como uno de los principales bloqueos para el alta operativa de nuevos clientes.
+
+- Se verificó que `Mercado Demo` tenía configuración activa en `store_whatsapp_settings`, mientras que `Tienda Piloto Norte` y `Tienda Piloto Sur` todavía no tenían configuración asociada.
+
+- Se revisó la estructura de `store_whatsapp_settings`.
+
+- Se confirmó que cada comercio puede tener una única configuración de WhatsApp mediante:
+
+  `UNIQUE (store_id)`
+
+- Se confirmó que un mismo `phone_number_id` no puede pertenecer a más de un comercio mediante:
+
+  `UNIQUE (phone_number_id)`
+
+- Se creó:
+
+  `sql/068_platform_save_whatsapp_settings.sql`
+
+- Se creó la RPC:
+
+  `public.platform_save_whatsapp_settings(...)`
+
+- La función permite al Platform Admin configurar por comercio:
+
+  - `phone_number_id`;
+
+  - `whatsapp_business_account_id`;
+
+  - número visible;
+
+  - estado activo de WhatsApp.
+
+- La configuración de WhatsApp quedó restringida exclusivamente al Platform Admin.
+
+- Los propietarios normales de los comercios no pueden modificar la asociación interna de Meta.
+
+- Los tokens de Meta, secretos de aplicación y `service_role` continúan fuera del frontend y del repositorio.
+
+- Se agregó al panel maestro `platform-admin.html` una sección:
+
+  `Configurar WhatsApp`
+
+- El selector de comercios reutiliza la lista segura obtenida mediante:
+
+  `public.platform_list_stores()`
+
+- Se verificó una actualización real de la configuración de `Mercado Demo` desde el Panel Maestro.
+
+- Se confirmó posteriormente en PostgreSQL que los datos fueron actualizados correctamente.
+
+- Se realizó una prueba de protección intentando asignar a `Tienda Piloto Norte` el mismo `phone_number_id` utilizado por `Mercado Demo`.
+
+- El sistema rechazó correctamente la operación mostrando:
+
+  `Ese Phone Number ID ya está asignado a otro comercio.`
+
+- Se verificó posteriormente que `Tienda Piloto Norte` continuó sin configuración de WhatsApp y que no se creó ningún registro parcial.
+
+- Se auditó posteriormente la infraestructura de domiciliarios.
+
+- Se confirmó que `delivery_drivers` requiere:
+
+  - comercio;
+
+  - usuario independiente de Supabase Auth;
+
+  - nombre;
+
+  - teléfono opcional;
+
+  - estado activo.
+
+- Se verificó la relación:
+
+  `delivery_drivers.user_id → auth.users(id)`
+
+- Se confirmó la restricción:
+
+  `UNIQUE (store_id, user_id)`
+
+- Se verificó que las políticas RLS existentes permiten la lectura correspondiente al domiciliario y al comercio, pero no permiten altas arbitrarias desde el navegador.
+
+- Se decidió que la creación de perfiles de domiciliarios permanecerá bajo control exclusivo del Platform Admin.
+
+- Los propietarios de los comercios pueden utilizar y asignar los domiciliarios disponibles, pero no crear cuentas adicionales directamente.
+
+- Esta arquitectura permite controlar posteriormente la cantidad de perfiles habilitados por comercio y utilizar domiciliarios adicionales como parte de los planes comerciales de Commerce Platform.
+
+- Se creó:
+
+  `sql/069_delivery_drivers_service_role.sql`
+
+- Se otorgaron al backend seguro los permisos necesarios sobre `delivery_drivers`.
+
+- Se creó y desplegó la Edge Function:
+
+  `platform-create-delivery-driver`
+
+- La función quedó también almacenada en el repositorio en:
+
+  `supabase/functions/platform-create-delivery-driver/index.ts`
+
+- Antes de crear un domiciliario, la Edge Function:
+
+  - exige usuario autenticado;
+
+  - verifica que sea Platform Admin activo;
+
+  - valida el comercio seleccionado;
+
+  - valida nombre;
+
+  - valida correo;
+
+  - exige contraseña inicial de mínimo 8 caracteres.
+
+- El alta automática realiza:
+
+  `crear usuario Auth → crear delivery_driver → asociarlo al comercio seleccionado`
+
+- Si falla la creación del registro de domiciliario después de crear el usuario Auth, la función intenta eliminar automáticamente dicho usuario para evitar cuentas incompletas.
+
+- Se agregó al Panel Maestro una sección:
+
+  `Crear domiciliario`
+
+- El Platform Admin puede seleccionar entre los comercios activos y registrar:
+
+  - nombre del domiciliario;
+
+  - teléfono;
+
+  - correo de acceso;
+
+  - contraseña inicial.
+
+- Se realizó una prueba real creando:
+
+  `Domiciliario Piloto Norte`
+
+  y asignándolo a:
+
+  `Tienda Piloto Norte`
+
+- La creación desde `platform-admin.html` finalizó correctamente.
+
+- Se verificó en `delivery_drivers` que:
+
+  - el domiciliario fue creado;
+
+  - se encuentra activo;
+
+  - tiene un `user_id`;
+
+  - pertenece exclusivamente a `Tienda Piloto Norte`.
+
+- Se verificó en `auth.users` que el usuario correspondiente fue creado correctamente y tiene el mismo `user_id` registrado en `delivery_drivers`.
+
+- Se verificó que el correo del usuario fue confirmado automáticamente durante el alta administrativa.
+
+- Se realizó una prueba real iniciando sesión desde `delivery.html` con la nueva cuenta.
+
+- El acceso fue exitoso y Commerce Platform identificó correctamente al usuario como:
+
+  `Domiciliario Piloto Norte`
+
+- El nuevo domiciliario visualizó únicamente su panel de domicilios y actualmente no mostró pedidos asignados, comportamiento esperado para una cuenta nueva.
+
+- Flujo validado:
+
+  `Platform Admin → crear domiciliario → Supabase Auth → delivery_drivers → asociación al comercio → login en delivery.html`
+
+- Con este paso ya no es necesario ingresar manualmente a Supabase para:
+
+  - asociar la configuración interna de WhatsApp de un comercio;
+
+  - crear usuarios Auth de domiciliarios;
+
+  - crear registros manuales en `delivery_drivers`;
+
+  - relacionar manualmente un domiciliario con su comercio.
+
+- Commerce Platform queda más cerca de permitir el alta y operación de nuevos comercios sin intervenciones manuales sobre la base de datos.
