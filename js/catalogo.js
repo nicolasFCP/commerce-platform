@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js';
+import { supabasePublic as supabase } from './supabase.js';
 
 const nombreComercio = document.querySelector('#nombre-comercio');
 const estado = document.querySelector('#estado');
