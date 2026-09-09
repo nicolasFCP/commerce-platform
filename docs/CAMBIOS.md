@@ -1536,3 +1536,261 @@ Fecha: 7 de septiembre de 2026
   - relacionar manualmente un domiciliario con su comercio.
 
 - Commerce Platform queda más cerca de permitir el alta y operación de nuevos comercios sin intervenciones manuales sobre la base de datos.
+
+**## Versión 0.0.42 — Sesiones independientes y actualización en tiempo real**
+
+Fecha: 9 de septiembre de 2026
+
+\- Se mejoró la experiencia operativa de Commerce Platform eliminando la necesidad de recargar manualmente las páginas para visualizar cambios importantes.
+
+\- Se habilitó Supabase Realtime para las tablas necesarias del flujo operativo, incluyendo:
+
+  - `orders`;
+
+  - `order_items`;
+
+  - `delivery_assignments`;
+
+  - `delivery_drivers`;
+
+  - `products`;
+
+  - `categories`;
+
+  - `store_payment_settings`.
+
+\- Se verificó correctamente la suscripción del panel administrativo mediante:
+
+  `Realtime admin: SUBSCRIBED`
+
+\- El panel administrativo ahora detecta cambios de pedidos y actualiza automáticamente:
+
+  - pedidos recibidos;
+
+  - estados de los pedidos;
+
+  - asignaciones de domiciliarios;
+
+  - pagos;
+
+  - reportes;
+
+  - métricas del negocio;
+
+  - análisis de productos.
+
+\- Se realizó una prueba real creando el pedido:
+
+  `Cliente Realtime`
+
+\- El nuevo pedido apareció automáticamente en `admin.html` sin necesidad de recargar la página.
+
+\- Se verificó el flujo completo de estados en tiempo real:
+
+  `pending → accepted → preparing → ready → out_for_delivery → completed`
+
+\- Los cambios realizados desde el panel del domiciliario se reflejan automáticamente en el panel administrativo.
+
+\- Se verificó que al recoger un pedido desde `delivery.html`, el administrador visualiza automáticamente:
+
+  `ready → out_for_delivery`
+
+\- Se verificó que al confirmar la entrega y el efectivo desde `delivery.html`, el administrador visualiza automáticamente:
+
+  - `status = completed`;
+
+  - `payment_status = paid`.
+
+\- Se agregó Realtime al panel de domiciliarios.
+
+\- El panel de domiciliarios escucha cambios en:
+
+  - `delivery_assignments`;
+
+  - `orders`.
+
+\- Se verificó correctamente:
+
+  `Realtime delivery: SUBSCRIBED`
+
+\- Cuando el administrador asigna un pedido a un domiciliario, el pedido aparece automáticamente en `delivery.html` sin utilizar F5.
+
+\- Se verificó mediante una prueba real el mensaje interno:
+
+  `Cambio de asignación detectado. Actualizando domiciliario...`
+
+\- Se corrigió un problema de sesiones compartidas entre los diferentes paneles de Commerce Platform.
+
+\- Antes de la corrección, iniciar sesión como domiciliario podía reemplazar en el mismo navegador la sesión del propietario del comercio.
+
+\- Esto podía ocasionar mensajes como:
+
+  `Esta cuenta no tiene acceso al panel administrativo.`
+
+  o errores al intentar modificar pedidos desde una sesión que había cambiado de identidad.
+
+\- Se separaron las sesiones de Supabase Auth mediante clientes independientes y diferentes `storageKey`.
+
+\- Se definieron clientes separados para:
+
+  - administrador del comercio;
+
+  - domiciliario;
+
+  - Platform Admin;
+
+  - catálogo público.
+
+\- Las sesiones utilizan almacenamiento independiente mediante claves similares a:
+
+  - `commerce-platform-admin-auth`;
+
+  - `commerce-platform-delivery-auth`;
+
+  - `commerce-platform-platform-auth`;
+
+  - `commerce-platform-public`.
+
+\- `admin.html` utiliza su propia sesión autenticada del comercio.
+
+\- `delivery.html` utiliza su propia sesión autenticada del domiciliario.
+
+\- `platform-admin.html` utiliza su propia sesión de Platform Admin.
+
+\- `demo.html` utiliza un cliente público sin sesión persistente.
+
+\- Se eliminó la advertencia de Supabase:
+
+  `Multiple GoTrueClient instances detected in the same browser context`
+
+\- Se verificó que administrador, domiciliario y Platform Admin pueden permanecer autenticados simultáneamente en diferentes pestañas del mismo navegador sin reemplazarse entre sí.
+
+\- Se verificó que al recargar cada página con F5:
+
+  - el administrador mantiene su sesión;
+
+  - el domiciliario mantiene su sesión;
+
+  - el Platform Admin mantiene su sesión.
+
+\- Se agregó restauración automática de sesión al Panel Maestro.
+
+\- `platform-admin.html` ahora recupera la sesión existente, vuelve a validar:
+
+  `public.is_platform_admin()`
+
+  y carga automáticamente el panel cuando el usuario continúa autorizado.
+
+\- Se mantuvo la validación de roles después de restaurar cada sesión.
+
+\- Una cuenta de domiciliario continúa sin poder acceder al panel administrativo del comercio.
+
+\- Se confirmó que cerrar sesión elimina únicamente la sesión correspondiente al panel utilizado y no afecta las sesiones independientes de otros paneles.
+
+\- Se mejoró el catálogo público para actualizarse automáticamente cuando el comercio modifica su información operativa.
+
+\- Se creó:
+
+  `sql/071_catalog_realtime_signal.sql`
+
+\- Se creó la tabla:
+
+  `public.catalog_realtime`
+
+\- La tabla funciona únicamente como señal segura de actualización y almacena:
+
+  - `store_id`;
+
+  - `version`;
+
+  - `updated_at`.
+
+\- `catalog_realtime` no expone:
+
+  - datos bancarios;
+
+  - tokens;
+
+  - secretos;
+
+  - información privada de productos;
+
+  - credenciales del comercio.
+
+\- Se creó la función interna:
+
+  `private.bump_catalog_realtime()`
+
+\- Se agregaron triggers para generar automáticamente una señal cuando cambian:
+
+  - productos;
+
+  - categorías;
+
+  - configuración de métodos de pago.
+
+\- Se agregó `catalog_realtime` a la publicación:
+
+  `supabase_realtime`
+
+\- Se verificó que cada comercio existente tenga su fila inicial de señal.
+
+\- Se verificó específicamente la fila correspondiente a:
+
+  `Tienda Prueba Integral`
+
+\- Se conectó `js/catalogo.js` con `catalog_realtime`.
+
+\- El catálogo escucha únicamente la señal correspondiente al `store_id` del comercio abierto en la URL.
+
+\- Se verificó correctamente:
+
+  `Realtime catálogo: SUBSCRIBED`
+
+\- Cuando se detecta una modificación, el catálogo vuelve a consultar de forma segura los datos públicos existentes.
+
+\- Se verificó un cambio real de precio desde `admin.html`:
+
+  `Agua 600ml: $2.500 → $2.700`
+
+\- El nuevo precio apareció automáticamente en `demo.html` sin recargar la página.
+
+\- Se verificó marcar `Agua 600ml` como agotado.
+
+\- El producto desapareció automáticamente del catálogo público sin F5.
+
+\- Se verificó volver a marcar `Agua 600ml` como disponible.
+
+\- El producto reapareció automáticamente conservando el precio actualizado de:
+
+  `$2.700`
+
+\- Se verificó desactivar la categoría:
+
+  `Bebidas`
+
+\- Al desactivarla, automáticamente:
+
+  - desapareció el botón de la categoría;
+
+  - desapareció la sección correspondiente;
+
+  - dejaron de mostrarse sus productos públicos.
+
+\- Se verificó reactivar `Bebidas`.
+
+\- La categoría y `Agua 600ml` reaparecieron automáticamente en el catálogo sin recargar.
+
+\- Con estas mejoras Commerce Platform pasa de un modelo basado en recargas manuales a un flujo operativo reactivo entre:
+
+  `cliente ↔ comercio ↔ domiciliario`
+
+\- Flujo funcional probado:
+
+  `cliente realiza pedido → administrador lo recibe automáticamente → administrador prepara → asigna domiciliario → domiciliario recibe automáticamente → domiciliario recoge → administrador ve el cambio → domiciliario entrega/cobra → administrador ve pedido completado y pago registrado`
+
+\- Los cambios del catálogo también quedan sincronizados automáticamente:
+
+  `administrador modifica catálogo → Supabase → señal Realtime → catálogo público actualizado`
+
+\- Commerce Platform queda preparada para operar de forma mucho más cercana a una aplicación comercial en tiempo real, reduciendo recargas manuales y evitando conflictos entre sesiones de diferentes tipos de usuario.

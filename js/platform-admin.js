@@ -1,4 +1,6 @@
-import { supabase } from './supabase.js';
+import {
+    supabasePlatform as supabase
+} from './supabase.js';
 
 
 // ======================================================
@@ -301,6 +303,126 @@ async function iniciarSesionPlatform() {
         await cargarComercios();
 
 }
+
+// ======================================================
+// RESTAURAR SESIÓN DE PLATFORM ADMIN
+// ======================================================
+
+async function restaurarSesionPlatform() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
+
+
+    if (error) {
+
+        console.error(
+            'Error restaurando sesión de Platform Admin:',
+            error
+        );
+
+        return;
+    }
+
+
+    const session =
+        data?.session;
+
+
+    if (
+        !session
+        ||
+        !session.user
+    ) {
+
+        return;
+    }
+
+
+    // ==================================================
+    // VERIFICAR QUE SIGA SIENDO PLATFORM ADMIN
+    // ==================================================
+
+    const {
+        data: esPlatformAdmin,
+        error: adminError
+    } = await supabase.rpc(
+        'is_platform_admin'
+    );
+
+
+    if (
+        adminError
+        ||
+        esPlatformAdmin !== true
+    ) {
+
+        console.error(
+            'Sesión sin acceso de Platform Admin:',
+            adminError
+        );
+
+
+        await supabase.auth.signOut();
+
+
+        platformContenido.style.display =
+            'none';
+
+
+        platformLoginEstado.textContent =
+            '⛔ Esta cuenta no tiene acceso al panel maestro.';
+
+
+        platformLogin.disabled = false;
+
+        platformLogin.textContent =
+            'Iniciar sesión';
+
+        return;
+    }
+
+
+    // ==================================================
+    // RESTAURAR PANEL
+    // ==================================================
+
+    platformEmail.value =
+        session.user.email ?? '';
+
+
+    platformPassword.value =
+        '';
+
+
+    platformLoginEstado.innerHTML = `
+        <strong>
+            Acceso administrativo autorizado ✅
+        </strong>
+
+        <br>
+
+        ${session.user.email}
+    `;
+
+
+    platformLogin.disabled = true;
+
+    platformLogin.textContent =
+        'Sesión iniciada';
+
+
+    platformContenido.style.display =
+        'block';
+
+
+    await cargarComercios();
+}
+
+
+restaurarSesionPlatform();
 
 // ======================================================
 // CREAR NUEVO COMERCIO

@@ -18,6 +18,10 @@ let metodosPagoActuales = {
     cash_on_delivery_enabled: false
 };
 
+let realtimeCatalogoIniciado = false;
+
+let realtimeCatalogoTimer = null;
+
 // ======================================================
 // COMERCIO DESDE LA URL
 // ======================================================
@@ -139,9 +143,90 @@ estado.textContent = 'Catálogo conectado con Supabase';
     }
 
 
-    productosDisponibles = products;
+        productosDisponibles = products;
 
-    mostrarCatalogo(categories, products);
+    mostrarCatalogo(
+        categories,
+        products
+    );
+
+    iniciarRealtimeCatalogo();
+}
+
+// ======================================================
+// ACTUALIZAR CATÁLOGO AUTOMÁTICAMENTE
+// ======================================================
+
+function programarActualizacionCatalogo() {
+
+    clearTimeout(
+        realtimeCatalogoTimer
+    );
+
+
+    realtimeCatalogoTimer =
+        setTimeout(
+            async () => {
+
+                console.log(
+                    'Cambio de catálogo detectado. Actualizando...'
+                );
+
+
+                await cargarCatalogo();
+
+            },
+            300
+        );
+}
+
+
+// ======================================================
+// REALTIME DEL CATÁLOGO PÚBLICO
+// ======================================================
+
+function iniciarRealtimeCatalogo() {
+
+    if (
+        realtimeCatalogoIniciado
+        ||
+        !comercioActual
+    ) {
+
+        return;
+    }
+
+
+    realtimeCatalogoIniciado =
+        true;
+
+
+    supabase
+        .channel(
+            `catalogo-${comercioActual.id}`
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'catalog_realtime',
+                filter:
+                    `store_id=eq.${comercioActual.id}`
+            },
+            programarActualizacionCatalogo
+        )
+
+        .subscribe(
+            status => {
+
+                console.log(
+                    'Realtime catálogo:',
+                    status
+                );
+            }
+        );
 }
 
 

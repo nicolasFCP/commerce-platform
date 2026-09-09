@@ -33,7 +33,7 @@ El sistema se encuentra publicado mediante GitHub Pages y puede demostrarse sin 
 
 ## Paso actual
 
-PASO 3.24 — Autonomía de configuración inicial y alta controlada de domiciliarios completada.
+PASO 3.25 — Prueba integral de alta y operación de un comercio nuevo completada.
 
 Completado:
 
@@ -45,6 +45,8 @@ PASO 3.23 — Creación, activación y desactivación de categorías desde el pa
 
 PASO 3.24 — Configuración de WhatsApp por comercio y creación de domiciliarios desde el Panel Maestro.
 
+PASO 3.25 — Prueba integral de comercio nuevo, separación de sesiones y operación en tiempo real.
+
 Actualmente Commerce Platform puede:
 
 - administrar múltiples comercios aislados;
@@ -53,83 +55,235 @@ Actualmente Commerce Platform puede:
 
 - crear automáticamente owner y categoría inicial `General`;
 
-- cargar catálogos públicos según el slug del comercio;
+- permitir que cada comercio gestione sus categorías y productos;
 
-- permitir que cada comercio gestione sus propias categorías y productos;
+- configurar métodos de pago;
 
-- configurar desde el Panel Maestro la asociación de WhatsApp de cada comercio;
+- crear y asociar domiciliarios desde el Panel Maestro;
 
-- impedir que un mismo `phone_number_id` sea asignado a dos comercios;
+- mantener sesiones independientes para:
+  - owner;
+  - domiciliario;
+  - Platform Admin;
+  - catálogo público;
 
-- crear usuarios independientes de domiciliarios desde el Panel Maestro;
+- mantener simultáneamente las diferentes sesiones en un mismo navegador;
 
-- asignar cada domiciliario al comercio seleccionado;
+- restaurar automáticamente las sesiones después de recargar la página;
 
-- crear automáticamente la cuenta correspondiente en Supabase Auth;
+- impedir que una cuenta de domiciliario acceda al panel administrativo del comercio;
 
-- permitir que el domiciliario inicie sesión desde `delivery.html`;
+- recibir nuevos pedidos automáticamente en `admin.html` mediante Supabase Realtime;
 
-- mantener separados los permisos de Platform Admin, owner del comercio y domiciliario;
+- actualizar automáticamente los estados de pedidos entre administrador y domiciliario;
+
+- mostrar automáticamente al domiciliario los pedidos que le sean asignados;
+
+- actualizar automáticamente el catálogo público cuando cambien:
+  - precios;
+  - disponibilidad;
+  - categorías;
+  - métodos de pago;
+
+- operar el ciclo completo de un pedido sin necesidad de recargar las páginas;
 
 - mantener aislamiento multi-comercio mediante RLS y restricciones de base de datos.
 
-Flujo actual de alta de comercio:
+## Prueba integral realizada
 
-`Platform Admin → crear comercio → Auth owner → store → store_member owner → categoría General`
+Se creó y utilizó:
 
-Configuración de WhatsApp:
+`Tienda Prueba Integral`
 
-`Platform Admin → seleccionar comercio → registrar Phone Number ID / WABA / número visible → store_whatsapp_settings`
+como comercio independiente para comprobar el funcionamiento real del sistema.
 
-Alta de domiciliario:
+Se verificó:
 
-`Platform Admin → seleccionar comercio → crear usuario Auth → delivery_drivers → login en delivery.html`
+- acceso independiente del owner;
 
-Decisión comercial y de seguridad:
+- creación y gestión de categorías;
 
-Los propietarios de los comercios no pueden crear libremente cuentas de domiciliarios.
+- creación y gestión de productos;
 
-La creación de estos perfiles queda reservada al Platform Admin, permitiendo controlar cuántos domiciliarios tiene habilitados cada comercio y dejando abierta la posibilidad de ofrecer perfiles adicionales como parte de los planes comerciales.
+- catálogo público por slug;
 
-Pruebas reales realizadas:
+- configuración de métodos de pago;
 
-`Mercado Demo`
+- creación y acceso de un domiciliario independiente;
 
-- configuración de WhatsApp actualizada correctamente desde `platform-admin.html`;
+- creación de un pedido desde el catálogo;
 
-- protección contra reutilización de su `phone_number_id` comprobada.
+- aparición automática del pedido en el administrador;
 
-`Tienda Piloto Norte`
+- flujo:
 
-- intento de utilizar el `phone_number_id` de Mercado Demo rechazado;
+`pending → accepted → preparing → ready`
 
-- ningún registro parcial fue creado;
+- asignación de domiciliario;
 
-- creación de `Domiciliario Piloto Norte` desde el Panel Maestro;
+- aparición automática del pedido en `delivery.html`;
 
-- usuario creado correctamente en Supabase Auth;
+- recogida por el domiciliario;
 
-- registro creado correctamente en `delivery_drivers`;
+- actualización automática:
 
-- asociación correcta con Tienda Piloto Norte;
+`ready → out_for_delivery`
 
-- inicio de sesión exitoso desde `delivery.html`.
+- confirmación de efectivo y entrega;
 
-Flujo de domiciliario verificado:
+- actualización automática:
 
-`Platform Admin → Auth → delivery_drivers → comercio correcto → delivery.html`
+`out_for_delivery → completed`
 
-Siguiente objetivo:
+- registro de:
 
-PASO 3.25 — Prueba integral de alta y operación de un comercio nuevo antes de iniciar la venta del MVP.
+`payment_status = paid`
+
+- actualización de reportes y métricas del comercio.
+
+## Sesiones independientes
+
+Se corrigió el uso compartido de la sesión de Supabase Auth entre diferentes paneles.
+
+Actualmente existen sesiones independientes para:
+
+`admin.html`
+
+`delivery.html`
+
+`platform-admin.html`
+
+El catálogo público utiliza un cliente separado sin sesión administrativa persistente.
+
+Se verificó que las tres sesiones pueden permanecer abiertas simultáneamente en el mismo navegador.
+
+Al utilizar F5:
+
+- el owner mantiene su sesión;
+
+- el domiciliario mantiene su sesión;
+
+- el Platform Admin mantiene su sesión.
+
+Cerrar sesión en un panel no debe cerrar las sesiones de los otros perfiles.
+
+## Operación en tiempo real
+
+Se habilitó Supabase Realtime para el flujo operativo.
+
+El administrador recibe automáticamente:
+
+- pedidos nuevos;
+
+- cambios de estado;
+
+- asignaciones;
+
+- cambios realizados por el domiciliario;
+
+- entregas;
+
+- pagos;
+
+- actualización de reportes.
+
+El domiciliario recibe automáticamente:
+
+- nuevas asignaciones;
+
+- cambios relacionados con sus pedidos.
+
+Flujo probado:
+
+`cliente → pedido → admin → preparación → asignación → domiciliario → recogida → entrega → pago → admin`
+
+sin necesidad de utilizar F5 para sincronizar los estados.
+
+## Catálogo público en tiempo real
+
+Se creó:
+
+`public.catalog_realtime`
+
+como señal segura de cambios del catálogo.
+
+Se creó:
+
+`private.bump_catalog_realtime()`
+
+y se conectaron triggers sobre:
+
+- `products`;
+
+- `categories`;
+
+- `store_payment_settings`.
+
+La tabla fue agregada a:
+
+`supabase_realtime`
+
+El catálogo escucha únicamente los cambios correspondientes al comercio abierto.
+
+Se verificó en `Tienda Prueba Integral`:
+
+`Agua 600ml: $2.500 → $2.700`
+
+El precio cambió automáticamente sin recargar.
+
+También se verificó:
+
+- producto agotado → desaparece automáticamente;
+
+- producto disponible → reaparece automáticamente;
+
+- categoría desactivada → desaparece automáticamente;
+
+- categoría activada → reaparece automáticamente.
+
+## Resultado del PASO 3.25
+
+La prueba integral no encontró un bloqueo estructural que impida operar un comercio nuevo desde las interfaces de Commerce Platform.
+
+Los principales problemas detectados durante la prueba fueron corregidos:
+
+- conflicto de sesiones entre perfiles;
+
+- persistencia de sesiones;
+
+- actualización manual mediante F5;
+
+- sincronización del administrador;
+
+- sincronización del domiciliario;
+
+- actualización automática del catálogo.
+
+Commerce Platform ya cuenta con un MVP funcional suficientemente integrado para pasar de la fase principal de construcción a preparación comercial y pruebas con un primer cliente real.
+
+## Siguiente objetivo
+
+PASO 3.26 — Preparación comercial del MVP y cierre de bloqueos previos a la primera venta.
 
 Objetivo inmediato:
 
-crear un comercio de prueba desde cero utilizando únicamente las interfaces de Commerce Platform y comprobar el flujo completo:
+revisar únicamente los puntos necesarios para entregar Commerce Platform a un primer cliente sin ampliar innecesariamente el alcance del producto.
 
-`crear comercio → iniciar sesión como owner → categorías → productos → pagos → domiciliario → catálogo → pedido → operación → entrega → reportes`
+Prioridades:
 
-La finalidad del PASO 3.25 será detectar únicamente bloqueos reales que impidan vender o instalar Commerce Platform a un primer cliente, corregirlos y preparar una versión MVP comercial.
+- corregir errores funcionales que aparezcan en las pruebas finales;
+
+- revisar experiencia móvil de los paneles principales;
+
+- definir claramente qué incluye el MVP comercial;
+
+- definir proceso de alta de un cliente;
+
+- definir precio inicial y posibles mensualidades;
+
+- preparar una demostración comercial limpia;
+
+- evitar agregar funciones que no sean necesarias para conseguir los primeros clientes.
 
 # Completado
 
@@ -2450,3 +2604,471 @@ Con este paso se eliminó la necesidad de realizar manualmente en Supabase:
 - configuración interna de WhatsApp por comercio.
 
 El siguiente paso será realizar una prueba integral creando un comercio desde cero y operándolo completamente mediante las interfaces de Commerce Platform antes de iniciar la venta del MVP.
+
+## 49. Prueba integral de comercio nuevo, sesiones independientes y operación en tiempo real
+
+Se completó el PASO 3.25 de Commerce Platform.
+
+La finalidad de esta etapa fue probar un comercio nuevo de principio a fin utilizando las interfaces de Commerce Platform y detectar únicamente bloqueos reales que impidieran operar o vender el MVP.
+
+### Comercio de prueba integral
+
+Se utilizó:
+
+`Tienda Prueba Integral`
+
+como comercio independiente para validar el flujo completo.
+
+El catálogo público se cargó mediante:
+
+`demo.html?store=tienda-prueba-integral`
+
+y mostró correctamente la información perteneciente únicamente a dicho comercio.
+
+Se verificó:
+
+- nombre del comercio;
+
+- categoría `Bebidas`;
+
+- producto `Agua 600ml`;
+
+- catálogo independiente;
+
+- aislamiento respecto a otros comercios.
+
+### Pedido integral real
+
+Desde el catálogo público se creó un pedido real utilizando:
+
+`Cliente Prueba Integral`
+
+con:
+
+- teléfono;
+
+- dirección;
+
+- notas;
+
+- producto `Agua 600ml`;
+
+- efectivo contraentrega.
+
+El pedido fue registrado correctamente y apareció en el panel administrativo de la tienda.
+
+Se verificó posteriormente el flujo completo:
+
+`pending → accepted → preparing → ready`
+
+### Asignación y entrega
+
+El administrador asignó el pedido a:
+
+`Domiciliario Prueba Integral`
+
+El domiciliario accedió mediante:
+
+`delivery.html`
+
+con su propia cuenta de Supabase Auth.
+
+Se verificó:
+
+`ready → recogida → out_for_delivery`
+
+Posteriormente se confirmó:
+
+- efectivo recibido;
+
+- entrega completada;
+
+- `payment_status = paid`;
+
+- `status = completed`.
+
+El pedido dejó de aparecer entre las asignaciones activas del domiciliario.
+
+El administrador visualizó correctamente el pedido completado y el pago registrado.
+
+### Protección de acceso por tipo de usuario
+
+Durante la prueba se detectó que una cuenta de domiciliario podía autenticarse técnicamente desde `admin.html` porque todos los paneles utilizaban Supabase Auth.
+
+Se reforzó el panel administrativo para comprobar que la cuenta autenticada tenga una membresía válida en:
+
+`store_members`
+
+Si el usuario no pertenece a un comercio administrativo, el panel muestra:
+
+`Esta cuenta no tiene acceso al panel administrativo.`
+
+y no carga la información privada del comercio.
+
+Se verificó que:
+
+`Domiciliario Prueba Integral`
+
+no puede acceder al panel administrativo.
+
+### Cierre de sesión
+
+Se agregó una acción visible:
+
+`Cerrar sesión`
+
+al panel administrativo.
+
+También se agregó cierre de sesión al panel del domiciliario.
+
+Se verificó:
+
+- cierre correcto de la sesión;
+
+- regreso al formulario de login;
+
+- posibilidad de volver a autenticarse normalmente.
+
+### Persistencia de sesión
+
+Se mejoró el comportamiento de autenticación para evitar que el usuario tenga que volver a ingresar correo y contraseña después de cada recarga.
+
+Se verificó que al utilizar F5:
+
+- `admin.html` mantiene la sesión del owner;
+
+- `delivery.html` mantiene la sesión del domiciliario;
+
+- `platform-admin.html` mantiene la sesión del Platform Admin.
+
+El Panel Maestro fue actualizado para recuperar automáticamente la sesión existente y volver a validar:
+
+`public.is_platform_admin()`
+
+antes de mostrar el contenido privado.
+
+### Separación de sesiones
+
+Durante las pruebas se detectó un problema importante:
+
+las diferentes instancias autenticadas de Supabase utilizaban inicialmente el mismo almacenamiento de sesión dentro del navegador.
+
+Esto provocaba que:
+
+- iniciar sesión como domiciliario pudiera reemplazar la sesión del owner;
+
+- iniciar sesión como otro perfil afectara pestañas ya abiertas;
+
+- aparecieran errores de permisos inesperados;
+
+- Supabase mostrara la advertencia:
+
+`Multiple GoTrueClient instances detected in the same browser context`
+
+Se corrigió la arquitectura de autenticación utilizando clientes de Supabase independientes para cada contexto.
+
+Actualmente existen clientes separados para:
+
+- administrador del comercio;
+
+- domiciliario;
+
+- Platform Admin;
+
+- catálogo público.
+
+Cada perfil autenticado utiliza una clave de almacenamiento independiente.
+
+Se verificó que:
+
+- owner;
+
+- domiciliario;
+
+- Platform Admin;
+
+pueden permanecer autenticados simultáneamente en diferentes pestañas del mismo navegador sin reemplazarse entre sí.
+
+Cerrar sesión en un panel no debe cerrar la sesión de otro perfil.
+
+### Supabase Realtime
+
+Se identificó que obligar al administrador y al domiciliario a utilizar F5 para conocer cambios de estado no era apropiado para una operación real.
+
+Se habilitó Supabase Realtime para las tablas necesarias del flujo operativo.
+
+Se verificó la publicación de:
+
+- `orders`;
+
+- `order_items`;
+
+- `delivery_assignments`;
+
+- `delivery_drivers`;
+
+- `products`;
+
+- `categories`;
+
+- `store_payment_settings`.
+
+### Realtime del administrador
+
+`admin.html` fue conectado a Supabase Realtime.
+
+Se verificó:
+
+`Realtime admin: SUBSCRIBED`
+
+El panel ahora puede actualizar automáticamente la información operativa cuando existen cambios.
+
+Se realizó un nuevo pedido de prueba:
+
+`Cliente Realtime`
+
+El pedido apareció automáticamente en el panel administrativo sin utilizar F5.
+
+Se verificó que el administrador puede continuar el flujo:
+
+`pending → accepted → preparing → ready`
+
+### Realtime del domiciliario
+
+`delivery.html` fue conectado a Realtime para escuchar:
+
+- `delivery_assignments`;
+
+- `orders`.
+
+Se verificó:
+
+`Realtime delivery: SUBSCRIBED`
+
+Cuando el administrador asignó `Cliente Realtime` a:
+
+`Domiciliario Prueba Integral`
+
+el pedido apareció automáticamente en el panel del domiciliario sin recargar.
+
+La consola confirmó:
+
+`Cambio de asignación detectado. Actualizando domiciliario...`
+
+### Sincronización domiciliario → administrador
+
+Se verificó el camino inverso.
+
+Cuando el domiciliario ejecutó:
+
+`Recoger pedido e iniciar domicilio`
+
+el pedido cambió:
+
+`ready → out_for_delivery`
+
+El administrador recibió automáticamente el cambio sin F5.
+
+Posteriormente el domiciliario confirmó:
+
+`efectivo recibido + entrega`
+
+El administrador recibió automáticamente:
+
+`status = completed`
+
+y:
+
+`payment_status = paid`
+
+Esto confirmó sincronización operativa en ambos sentidos:
+
+`admin ↔ domiciliario`
+
+### Señal segura para Realtime del catálogo
+
+Se identificó que escuchar directamente `products` y `categories` desde el catálogo público podía presentar problemas cuando un registro deja de cumplir las políticas públicas de RLS.
+
+Para resolverlo se creó:
+
+`sql/071_catalog_realtime_signal.sql`
+
+Se creó la tabla:
+
+`public.catalog_realtime`
+
+con:
+
+- `store_id`;
+
+- `version`;
+
+- `updated_at`.
+
+La tabla funciona únicamente como señal de actualización.
+
+No contiene:
+
+- datos bancarios;
+
+- tokens;
+
+- secretos;
+
+- credenciales;
+
+- información sensible del comercio.
+
+Se creó:
+
+`private.bump_catalog_realtime()`
+
+La función incrementa la versión correspondiente cuando se modifican datos que afectan el catálogo.
+
+Se agregaron triggers sobre:
+
+- `products`;
+
+- `categories`;
+
+- `store_payment_settings`.
+
+También se agregó:
+
+`public.catalog_realtime`
+
+a:
+
+`supabase_realtime`.
+
+Se verificó la existencia de una fila para:
+
+`Tienda Prueba Integral`
+
+y su publicación correcta en Realtime.
+
+### Realtime del catálogo público
+
+`js/catalogo.js` fue conectado con:
+
+`public.catalog_realtime`
+
+El catálogo escucha únicamente cambios del:
+
+`store_id`
+
+correspondiente al comercio abierto.
+
+Se verificó:
+
+`Realtime catálogo: SUBSCRIBED`
+
+Cuando recibe una señal, el catálogo vuelve a consultar los datos públicos mediante las consultas existentes.
+
+### Prueba de cambio de precio
+
+Desde `admin.html` se cambió:
+
+`Agua 600ml`
+
+de:
+
+`$2.500`
+
+a:
+
+`$2.700`
+
+El catálogo público mostró automáticamente:
+
+`$2.700`
+
+sin utilizar F5.
+
+### Prueba de disponibilidad
+
+Se marcó:
+
+`Agua 600ml`
+
+como agotado.
+
+El producto desapareció automáticamente del catálogo público.
+
+Posteriormente se volvió a marcar como disponible.
+
+El producto reapareció automáticamente con su precio actualizado:
+
+`$2.700`
+
+### Prueba de categorías
+
+Se desactivó:
+
+`Bebidas`
+
+Desde el catálogo público desaparecieron automáticamente:
+
+- botón `Bebidas`;
+
+- sección `Bebidas`;
+
+- productos pertenecientes a la categoría.
+
+Posteriormente se volvió a activar.
+
+La categoría y `Agua 600ml` reaparecieron automáticamente sin recargar.
+
+### Resultado de la prueba integral
+
+Se comprobó el flujo completo:
+
+`cliente`
+
+→ catálogo público
+
+→ pedido
+
+→ administrador recibe automáticamente
+
+→ aceptación
+
+→ preparación
+
+→ pedido listo
+
+→ asignación
+
+→ domiciliario recibe automáticamente
+
+→ recogida
+
+→ administrador recibe cambio
+
+→ entrega
+
+→ cobro
+
+→ administrador recibe pedido completado
+
+→ reportes actualizados
+
+Además se verificó que los cambios de catálogo se propagan automáticamente hacia el cliente.
+
+Los principales bloqueos detectados durante el PASO 3.25 fueron:
+
+- sesiones compartidas entre perfiles;
+
+- ausencia de persistencia adecuada en algunos paneles;
+
+- necesidad de recargar para visualizar cambios;
+
+- sincronización manual entre administrador y domiciliario;
+
+- actualización manual del catálogo.
+
+Estos puntos fueron corregidos.
+
+Commerce Platform cuenta ahora con una operación mucho más cercana a una aplicación comercial en tiempo real y queda lista para pasar al:
+
+`PASO 3.26 — Preparación comercial del MVP y cierre de bloqueos previos a la primera venta`.

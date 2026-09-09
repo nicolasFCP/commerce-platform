@@ -19,6 +19,7 @@ const mensaje = document.querySelector('#mensaje');
 const pedidosPanel = document.querySelector('#pedidos-panel');
 const estadoPedidos = document.querySelector('#estado-pedidos');
 const listaPedidos = document.querySelector('#lista-pedidos');
+const logoutButton = document.querySelector('#logout-button');
 
 
 // ======================================================
@@ -144,6 +145,10 @@ let productosParaReemplazo = [];
 let paymentSettingsActual = null;
 
 let domiciliariosDisponibles = [];
+
+let realtimeAdminIniciado = false;
+
+let realtimeAdminTimer = null;
 
 const transferEnabled = document.querySelector(
     '#transfer-enabled'
@@ -508,6 +513,11 @@ formulario.addEventListener(
     iniciarSesion
 );
 
+logoutButton.addEventListener(
+    'click',
+    cerrarSesion
+);
+
 categoriaForm.addEventListener(
     'submit',
     crearCategoria
@@ -527,6 +537,78 @@ guardarPaymentSettings.addEventListener(
     'click',
     guardarConfiguracionPago
 );
+
+// ======================================================
+// CERRAR SESIÓN
+// ======================================================
+
+async function cerrarSesion() {
+
+    logoutButton.disabled = true;
+
+    logoutButton.textContent =
+        'Cerrando sesión...';
+
+
+    clearTimeout(
+        realtimeAdminTimer
+    );
+
+
+    await supabase.removeAllChannels();
+
+
+    const {
+        error
+    } = await supabase.auth.signOut();
+
+
+    if (error) {
+
+        console.error(
+            'Error cerrando sesión:',
+            error
+        );
+
+
+        mensaje.textContent =
+            'No se pudo cerrar la sesión.';
+
+
+        logoutButton.disabled = false;
+
+        logoutButton.textContent =
+            'Cerrar sesión';
+
+        return;
+    }
+
+
+    realtimeAdminIniciado = false;
+
+
+    pedidosPanel.style.display =
+        'none';
+
+
+    formulario.reset();
+
+
+    mensaje.textContent =
+        'Sesión cerrada correctamente.';
+
+
+    boton.disabled = false;
+
+    boton.textContent =
+        'Iniciar sesión';
+
+
+    logoutButton.disabled = false;
+
+    logoutButton.textContent =
+        'Cerrar sesión';
+}
 
 async function iniciarSesion(event) {
 
@@ -565,6 +647,68 @@ async function iniciarSesion(event) {
     }
 
 
+    await cargarPanelAutenticado(
+        data.user
+    );
+}
+
+// ======================================================
+// CARGAR PANEL CON USUARIO AUTENTICADO
+// ======================================================
+
+async function cargarPanelAutenticado(user) {
+
+        // ==================================================
+    // VALIDAR QUE EL USUARIO PERTENEZCA A UN COMERCIO
+    // ==================================================
+
+    const {
+        data: store,
+        error: storeError
+    } = await supabase
+        .from('stores')
+        .select('id, name')
+        .limit(1)
+        .maybeSingle();
+
+
+    if (
+        storeError
+        ||
+        !store
+    ) {
+
+        console.error(
+            'Usuario sin acceso administrativo:',
+            storeError
+        );
+
+
+        await supabase.auth.signOut();
+
+
+        pedidosPanel.style.display =
+            'none';
+
+
+        mensaje.textContent =
+            'Esta cuenta no tiene acceso al panel administrativo.';
+
+
+        emailInput.value = '';
+
+        passwordInput.value = '';
+
+
+        boton.disabled = false;
+
+        boton.textContent =
+            'Iniciar sesión';
+
+
+        return;
+    }
+
     mensaje.innerHTML = `
         <strong>
             Sesión iniciada correctamente ✅
@@ -572,36 +716,235 @@ async function iniciarSesion(event) {
 
         <br>
 
-        ${data.user.email}
+        ${user.email}
     `;
 
 
-    boton.textContent = 'Sesión iniciada';
+    emailInput.value =
+        user.email ?? '';
 
-    pedidosPanel.style.display = 'block';
 
- 
+    passwordInput.value =
+        '';
+
+
+    boton.disabled = true;
+
+    boton.textContent =
+        'Sesión iniciada';
+
+
+    pedidosPanel.style.display =
+        'block';
+
 
     await cargarProductos();
 
     await cargarDomiciliarios();
 
-await cargarPedidos();
+    await cargarPedidos();
+
+    await cargarCategorias();
+
+    await cargarCategoriasAdmin();
+
+    await cargarPaymentSettings();
+
+    await cargarDashboard();
+
+    await cargarReportes();
+
+    await cargarAnalisisProductos();
+
+    await cargarConversacionesHandoff();
+
+    iniciarRealtimeAdmin();
+
+}
+
+// ======================================================
+// RESTAURAR SESIÓN AL RECARGAR
+// ======================================================
+
+async function restaurarSesion() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
 
 
-await cargarCategorias();
+    if (error) {
 
-await cargarCategoriasAdmin();
+        console.error(
+            'Error restaurando sesión:',
+            error
+        );
 
-await cargarPaymentSettings();
+        return;
+    }
 
-await cargarDashboard();
 
-await cargarReportes();
+    const session =
+        data?.session;
 
-await cargarAnalisisProductos();
 
-await cargarConversacionesHandoff();
+    if (
+        !session
+        ||
+        !session.user
+    ) {
+
+        return;
+    }
+
+
+    await cargarPanelAutenticado(
+        session.user
+    );
+}
+
+
+restaurarSesion();
+
+// ======================================================
+// ACTUALIZAR PANEL AUTOMÁTICAMENTE
+// ======================================================
+
+function programarActualizacionAdmin() {
+
+    clearTimeout(
+        realtimeAdminTimer
+    );
+
+
+    realtimeAdminTimer =
+        setTimeout(
+            async () => {
+
+                console.log(
+                    'Cambio detectado. Actualizando panel...'
+                );
+
+
+                await Promise.all([
+                    cargarPedidos(),
+                    cargarDomiciliarios(),
+                    cargarProductos(),
+                    cargarCategorias(),
+                    cargarCategoriasAdmin(),
+                    cargarPaymentSettings(),
+                    cargarDashboard(),
+                    cargarReportes(),
+                    cargarAnalisisProductos()
+                ]);
+
+            },
+            300
+        );
+}
+
+
+// ======================================================
+// REALTIME DEL PANEL ADMINISTRATIVO
+// ======================================================
+
+function iniciarRealtimeAdmin() {
+
+    if (realtimeAdminIniciado) {
+
+        return;
+    }
+
+
+    realtimeAdminIniciado =
+        true;
+
+
+    supabase
+        .channel(
+            'admin-realtime'
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'orders'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'order_items'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'delivery_assignments'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'delivery_drivers'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'products'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'categories'
+            },
+            programarActualizacionAdmin
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'store_payment_settings'
+            },
+            programarActualizacionAdmin
+        )
+
+        .subscribe(
+            status => {
+
+                console.log(
+                    'Realtime admin:',
+                    status
+                );
+            }
+        );
 }
 
 // ======================================================

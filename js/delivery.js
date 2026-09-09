@@ -1,4 +1,6 @@
-import { supabase } from './supabase.js';
+import {
+    supabaseDelivery as supabase
+} from './supabase.js';
 
 
 // ======================================================
@@ -40,6 +42,11 @@ const deliveryPanel =
         '#delivery-panel'
     );
 
+const deliveryLogoutButton =
+    document.querySelector(
+        '#delivery-logout-button'
+    );    
+
 const driverName =
     document.querySelector(
         '#delivery-driver-name'
@@ -55,6 +62,9 @@ const ordersList =
         '#delivery-orders-list'
     );
 
+let realtimeDeliveryIniciado = false;
+
+let realtimeDeliveryTimer = null;
 
 // ======================================================
 // LOGIN
@@ -65,6 +75,79 @@ formulario.addEventListener(
     iniciarSesion
 );
 
+deliveryLogoutButton.addEventListener(
+    'click',
+    cerrarSesionDomiciliario
+);
+
+
+// ======================================================
+// CERRAR SESIÓN DEL DOMICILIARIO
+// ======================================================
+
+async function cerrarSesionDomiciliario() {
+
+    deliveryLogoutButton.disabled = true;
+
+    deliveryLogoutButton.textContent =
+        'Cerrando sesión...';
+
+
+    const {
+        error
+    } = await supabase.auth.signOut();
+
+
+    if (error) {
+
+        console.error(
+            'Error cerrando sesión del domiciliario:',
+            error
+        );
+
+
+        loginMessage.textContent =
+            'No se pudo cerrar la sesión.';
+
+
+        deliveryLogoutButton.disabled = false;
+
+        deliveryLogoutButton.textContent =
+            'Cerrar sesión';
+
+        return;
+    }
+
+
+    deliveryPanel.style.display =
+        'none';
+
+
+    formulario.reset();
+
+
+    driverName.textContent = '';
+
+    ordersStatus.textContent = '';
+
+    ordersList.innerHTML = '';
+
+
+    loginMessage.textContent =
+        'Sesión cerrada correctamente.';
+
+
+    loginButton.disabled = false;
+
+    loginButton.textContent =
+        'Iniciar sesión';
+
+
+    deliveryLogoutButton.disabled = false;
+
+    deliveryLogoutButton.textContent =
+        'Cerrar sesión';
+}
 
 async function iniciarSesion(event) {
 
@@ -114,9 +197,20 @@ async function iniciarSesion(event) {
     }
 
 
-    // ==================================================
-    // VALIDAR QUE SEA DOMICILIARIO
-    // ==================================================
+       await cargarPanelDomiciliario(
+        data.user,
+        true
+    );
+}
+
+// ======================================================
+// CARGAR PANEL DEL DOMICILIARIO AUTENTICADO
+// ======================================================
+
+async function cargarPanelDomiciliario(
+    user,
+    cerrarSesionSiNoEsDriver = false
+) {
 
     const {
         data: driver,
@@ -131,7 +225,7 @@ async function iniciarSesion(event) {
         `)
         .eq(
             'user_id',
-            data.user.id
+            user.id
         )
         .eq(
             'active',
@@ -152,7 +246,11 @@ async function iniciarSesion(event) {
         );
 
 
-        await supabase.auth.signOut();
+        if (cerrarSesionSiNoEsDriver) {
+
+            await supabase.auth.signOut();
+
+        }
 
 
         loginMessage.textContent =
@@ -168,13 +266,19 @@ async function iniciarSesion(event) {
     }
 
 
-    // ==================================================
-    // MOSTRAR PANEL
-    // ==================================================
-
     loginMessage.textContent =
         'Sesión iniciada correctamente ✅';
 
+
+    emailInput.value =
+        user.email ?? '';
+
+
+    passwordInput.value =
+        '';
+
+
+    loginButton.disabled = true;
 
     loginButton.textContent =
         'Sesión iniciada';
@@ -195,9 +299,137 @@ async function iniciarSesion(event) {
     ordersList.innerHTML = '';
 
 
-    await cargarPedidos();
+        await cargarPedidos();
+
+    iniciarRealtimeDelivery();
 }
 
+// ======================================================
+// RESTAURAR SESIÓN AL RECARGAR
+// ======================================================
+
+async function restaurarSesionDomiciliario() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
+
+
+    if (error) {
+
+        console.error(
+            'Error restaurando sesión del domiciliario:',
+            error
+        );
+
+        return;
+    }
+
+
+    const session =
+        data?.session;
+
+
+    if (
+        !session
+        ||
+        !session.user
+    ) {
+
+        return;
+    }
+
+
+    await cargarPanelDomiciliario(
+        session.user,
+        false
+    );
+}
+
+
+restaurarSesionDomiciliario();
+
+// ======================================================
+// ACTUALIZAR PEDIDOS AUTOMÁTICAMENTE
+// ======================================================
+
+function programarActualizacionDelivery() {
+
+    clearTimeout(
+        realtimeDeliveryTimer
+    );
+
+
+    realtimeDeliveryTimer =
+        setTimeout(
+            async () => {
+
+                console.log(
+                    'Cambio de asignación detectado. Actualizando domiciliario...'
+                );
+
+
+                await cargarPedidos();
+
+            },
+            300
+        );
+}
+
+
+// ======================================================
+// REALTIME DE ASIGNACIONES DEL DOMICILIARIO
+// ======================================================
+
+function iniciarRealtimeDelivery() {
+
+    if (realtimeDeliveryIniciado) {
+
+        return;
+    }
+
+
+    realtimeDeliveryIniciado =
+        true;
+
+
+    supabase
+        .channel(
+            'delivery-realtime'
+        )
+
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'delivery_assignments'
+            },
+            programarActualizacionDelivery
+        )
+
+
+                .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'orders'
+            },
+            programarActualizacionDelivery
+        )
+
+        .subscribe(
+            status => {
+
+                console.log(
+                    'Realtime delivery:',
+                    status
+                );
+            }
+        );
+}
 
 // ======================================================
 // CARGAR PEDIDOS ASIGNADOS
